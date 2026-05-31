@@ -1,270 +1,267 @@
 # Denial Defense
 
-An open-source healthcare AI research project that helps patients draft insurance appeal letters using a multi-agent system with adversarial critique.
+**Multi-agent AI system that writes insurance appeal letters using adversarial revision.**
 
-> **🚀 NEW: Multi-Agent Harness Complete!** See [STATUS.md](STATUS.md) for quick start guide.
+We're open-sourcing this tonight because Americans shouldn't need a developer in the family to navigate their insurance.
 
-> **Note**: The CA DMHC IMR dataset (81MB CSV) is not included in this repository due to GitHub file size limits. 
-> Download it from: https://data.chhs.ca.gov/dataset/independent-medical-review-imr-determinations-trend
-> Place it in: `data/raw/imr/independent-medical-review-imr-determinations-trend.csv`
+---
 
-## Overview
+## The Problem
 
-Denial Defense is a non-commercial research project (MIT License) that aims to empower patients facing health insurance denials by providing AI-assisted appeal letter drafting. The system analyzes denial letters, medical policies, and successful appeal examples to help craft effective appeals.
+Insurance companies deny necessary medical treatments. Patients write appeals, but:
+- Don't know what arguments work
+- Don't know relevant legal precedent  
+- Can't predict insurer counterarguments
+
+**Result:** 99% of denied claims are never appealed. [(KFF, 2023)](https://www.kff.org/private-insurance/issue-brief/claims-denials-and-appeals-in-aca-marketplace-plans/)
+
+---
+
+## Our Solution
+
+A multi-agent AI system that generates appeal letters **already battle-tested against adversarial attacks**.
+
+### Architecture
+
+**5 AI agents working in 2 rounds:**
+
+1. **Round 1 (Parallel):**
+   - Medical Necessity Agent → Clinical evidence
+   - Policy Citation Agent → Criteria matching
+   - Precedent Agent → IMR case law
+
+2. **Adversarial Critic:**
+   - Simulates insurer's medical reviewer
+   - Attacks the weakest argument
+
+3. **Round 2 (Revision):**
+   - Agents revise to address critique
+   - Critic attacks again
+
+4. **Supervisor:**
+   - Synthesizes final appeal from strongest arguments
+
+**The letter you get is a third draft that already survived two attacks.**
+
+---
+
+## Proof: 100% vs 87%
+
+We evaluated both systems on **15 real California DMHC denial cases**. An adversarial judge (GPT-4o-mini playing insurer medical reviewer) tried to re-attack each appeal.
+
+![Evaluation Comparison](prompts/pitch_asserts/eval_comparision.png)
+
+**Results:**
+- **Multi-Agent Harness:** 15/15 passed (100%)
+- **Single-Agent Baseline:** 13/15 passed (87%)
+- **Improvement:** +13 percentage points
+
+The multi-agent system with adversarial revision produces appeals that are **measurably more robust** to insurer counterarguments.
+
+---
+
+## Quick Start
+
+### Prerequisites
+- Python 3.9+
+- OpenAI API key
+- Weights & Biases account (free)
+
+### Install
+
+```bash
+git clone https://github.com/SandaAbhishekSagar/denial-defense.git
+cd denial-defense
+pip install -r requirements.txt
+```
+
+### Configure
+
+```bash
+# Create .env file
+cp .env.example .env
+
+# Add your API keys to .env
+OPENAI_API_KEY=your_openai_key_here
+WANDB_API_KEY=your_wandb_key_here
+```
+
+### Run Demo
+
+```bash
+python web/app.py
+# Open http://localhost:5000
+```
+
+**Try it:**
+1. Toggle "Show side-by-side comparison" ON
+2. Click "Oscar Health — Cromolyn for MCAS"
+3. See baseline (left) vs harness (right) after ~25 seconds
+
+---
+
+## Demo Cases
+
+Three real denial scenarios:
+
+1. **Oscar Health — Cromolyn for MCAS**  
+   Pharmacy denial for mast cell activation syndrome treatment
+
+2. **Cigna — Spinal Cord Stimulator Trial**  
+   Medical necessity denial for chronic pain management device
+
+3. **Anthem — Residential SUD with MHPAEA Parity**  
+   Mental health parity violation for substance use disorder treatment
+
+---
 
 ## Project Structure
 
 ```
 denial-defense/
-├── data/                           # All datasets (raw and processed)
-│   ├── raw/                       # Raw, unprocessed data
-│   │   ├── imr/                  # CA DMHC IMR dataset (42,750 cases)
-│   │   ├── sample_appeals/       # State-published appeal letter examples
-│   │   ├── denial_letters/       # Denial letter examples
-│   │   ├── insurer_policies/     # Medical policies by insurer
-│   │   ├── propublica_articles/  # ProPublica reporting
-│   │   ├── kff_bill_of_month/    # KFF Health News stories
-│   │   └── state_appeal_resources/ # State-specific appeal guides
-│   ├── processed/                 # Cleaned and structured data
-│   └── demo/                      # Demo cases for testing
-│       ├── case_01_bariatric/
-│       ├── case_02_cromolyn/
-│       └── case_03_oon_emergency/
-├── scripts/                        # Data collection and processing scripts
-│   ├── collect_supplemental_data.py
-│   ├── collect.ps1
-│   └── collect.sh
-├── agents/                         # Multi-agent system components
-├── web/                           # Web interface
-│   └── templates/
-├── eval/                          # Evaluation scripts and results
-├── prompts/                       # LLM prompts and templates
-├── logs/                          # Collection and processing logs
-├── requirements.txt               # Python dependencies
-├── DATA_COLLECTION.md             # Data collection documentation
-└── README.md                      # This file
+├── agents/
+│   ├── baseline.py         # Single-agent comparison
+│   ├── harness.py          # Multi-agent orchestrator (LangGraph)
+│   ├── prompts.py          # System prompts for all 6 agents
+│   └── playbook.py         # CARC denial codes + federal protections
+├── data/
+│   ├── demo/               # 3 demo cases (JSON)
+│   └── processed/          # Denial playbook (10 CARC codes)
+├── eval/
+│   └── compare_eval.py     # Weave evaluation script
+├── web/
+│   ├── app.py              # Flask backend
+│   └── templates/          # UI with comparison mode
+└── requirements.txt
 ```
-
-## Quick Start
-
-### For the Multi-Agent Harness (NEW!)
-
-**See [STATUS.md](STATUS.md) for complete setup instructions.**
-
-Quick version:
-```bash
-# 1. Configure API keys
-cp .env.example .env
-# Edit .env and add OPENAI_API_KEY and WANDB_API_KEY
-
-# 2. Test the baseline agent
-python agents/baseline.py
-
-# 3. Test the multi-agent harness
-python agents/harness.py
-
-# 4. Launch the web UI
-python web/app.py
-# Open http://localhost:5000
-```
-
-### For Data Collection
-
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Set Up Data Directories
-
-```bash
-python scripts/collect_supplemental_data.py --setup-only
-```
-
-This creates the complete directory hierarchy without running any scrapers.
-
-### 3. Collect Supplemental Data
-
-#### Option A: Run all phases
-
-```bash
-python scripts/collect_supplemental_data.py --all
-```
-
-#### Option B: Use shell scripts
-
-**PowerShell (Windows):**
-```powershell
-.\scripts\collect.ps1
-```
-
-**Bash (Linux/Mac):**
-```bash
-bash scripts/collect.sh
-```
-
-#### Option C: Run individual phases
-
-```bash
-# State appeal resources (fastest, most reliable)
-python scripts/collect_supplemental_data.py --skip-setup --only state_resources
-
-# ProPublica articles
-python scripts/collect_supplemental_data.py --skip-setup --only propublica
-
-# KFF Bill of the Month
-python scripts/collect_supplemental_data.py --skip-setup --only kff
-
-# Insurer policies (may require manual steps)
-python scripts/collect_supplemental_data.py --skip-setup --only insurer_policies
-```
-
-See [DATA_COLLECTION.md](DATA_COLLECTION.md) for comprehensive documentation on data collection.
-
-## Data Sources
-
-### Primary Dataset
-
-**California DMHC Independent Medical Review (IMR) Determinations**
-- 42,750 cases of independent medical review decisions
-- Covers denials across all major insurers and medical categories
-- Source: https://data.chhs.ca.gov/dataset/independent-medical-review-imr-determinations-trend
-- License: Public domain
-
-### Supplemental Data
-
-1. **Sample Appeal Letters** - State insurance departments (WA, NC, NY, TX, MA)
-2. **Insurer Medical Policies** - Publicly published policies from major insurers
-3. **ProPublica "Uncovered" Series** - Investigative journalism on insurance denials
-4. **KFF Bill of the Month** - Consumer stories about medical bills and denials
-5. **State Appeal Resources** - Consumer guides and templates
-
-All data sources are publicly available, and collection respects robots.txt, rate limits, and data privacy.
-
-## Data Collection Principles
-
-1. **Public sources only** - We only collect publicly published content
-2. **Robots.txt compliance** - All scraping respects robots.txt directives
-3. **Rate limiting** - 1 request per 2 seconds per domain minimum
-4. **Privacy protection** - PHI screening to exclude protected health information
-5. **Attribution** - All sources documented with URLs and timestamps
-6. **License compliance** - We respect Creative Commons and other license terms
-
-## Project Goals
-
-### Phase 1: Data Collection ✅
-- [x] Set up project hierarchy
-- [x] Collect CA DMHC IMR dataset
-- [x] Collect state appeal letter samples
-- [x] Implement supplemental data scrapers
-- [x] Build denial playbook with CARC codes
-
-### Phase 2: Data Processing ✅
-- [x] Clean and structure IMR dataset
-- [x] Create stratified evaluation set (162 cases)
-- [x] Extract denial patterns by CARC code
-- [x] Build searchable playbook
-
-### Phase 3: Multi-Agent System ✅
-- [x] Medical Necessity agent (clinical evidence)
-- [x] Policy Citation agent (criteria matching)
-- [x] Precedent agent (IMR case law)
-- [x] Insurer Defense critic (adversarial attacks)
-- [x] Supervisor agent (orchestration + synthesis)
-- [x] Round-based revision (2 rounds)
-
-### Phase 4: Evaluation ⏳
-- [x] Baseline single-agent system
-- [x] Weave evaluation framework
-- [x] Adversarial "survives attack" scorer
-- [ ] Run full 30-case comparison
-
-### Phase 5: Web Interface ✅
-- [x] Flask backend with case selector
-- [x] Single-page UI with 3 demo cases
-- [x] Real-time harness execution
-- [x] Structured output display
-
-## Technology Stack
-
-- **Language**: Python 3.8+
-- **LLM**: OpenAI GPT-4o
-- **Orchestration**: LangGraph (multi-agent with parallel execution)
-- **Observability**: W&B Weave
-- **Web Framework**: Flask + vanilla JS
-- **Web Scraping**: requests, BeautifulSoup, Playwright
-- **Data Processing**: pandas, numpy
-
-## Architecture
-
-**Pattern:** Supervisor-worker with adversarial critic and round-based revision
-
-The system uses 3 patient-side agents working in parallel (Medical Necessity, Policy Citation, Precedent), an adversarial critic with no external tools (Insurer Defense), and a supervisor for orchestration. Appeals go through 2 rounds of revision based on critique.
-
-See [HARNESS_README.md](HARNESS_README.md) for technical details.
-
-## Demo Cases
-
-1. **Oscar Health — Cromolyn for MCAS**  
-   Pharmacy denial for experimental treatment, ICD-10 mismatch
-
-2. **Cigna — Spinal Cord Stimulator Trial**  
-   DME denial for chronic pain, step therapy documentation
-
-3. **Anthem — Residential SUD with MHPAEA Parity**  
-   Mental health denial, federal law violation
-
-## Contributing
-
-This is an open-source research project. Contributions are welcome!
-
-Areas where help is needed:
-- Manual collection of insurer medical policies
-- Data cleaning and structuring
-- Multi-agent system architecture
-- Evaluation framework
-- Web interface development
-
-## Legal and Ethical Considerations
-
-### Privacy
-- No PHI (Protected Health Information) is collected or stored
-- All data comes from public sources or is anonymized
-- Users must remove identifying information before uploading denial letters
-
-### Disclaimer
-- This tool provides informational assistance only
-- Not a substitute for legal or medical advice
-- Users should review and customize all generated content
-- Success not guaranteed - appeals are evaluated on individual merit
-
-### License
-MIT License - See LICENSE file for details
-
-Individual data sources may have their own licenses:
-- ProPublica: CC BY-NC-ND 3.0
-- KFF Health News: CC BY-NC-ND 4.0
-- Government sources: Public domain
-- Insurer policies: Publicly published (fair use for research)
-
-## Contact
-
-**Project Lead**: Abhishek Sagar
-- Email: sabhisheksagar200@gmail.com
-
-This is a hackathon/research project. For questions about data collection, contributions, or collaboration, please reach out.
-
-## Acknowledgments
-
-- **California Department of Managed Health Care** - For publishing the IMR dataset
-- **ProPublica** - For investigative reporting on insurance denials
-- **KFF Health News** - For consumer stories highlighting insurance issues
-- **State Insurance Departments** - For publishing consumer appeal resources
-- **Open source community** - For tools and frameworks that make this possible
 
 ---
 
-**Project Status**: ✅ **Multi-agent harness complete and ready for testing**  
-**Last Updated**: May 31, 2026  
-**See [STATUS.md](STATUS.md) for detailed build report and quick start guide**
+## Key Features
+
+### 1. Adversarial Revision Loop
+Unlike ChatGPT/Claude (single draft), our system:
+- ✅ Generates draft
+- ✅ Attacks it (adversarial critic)
+- ✅ Revises based on critique
+- ✅ Attacks again
+- ✅ Synthesizes strongest arguments
+
+### 2. Observability with Weave
+Every agent call tracked in W&B Weave:
+- View trace hierarchy
+- Compare baseline vs harness
+- See round-by-round evolution
+
+### 3. Side-by-Side Comparison UI
+Toggle comparison mode to see:
+- Baseline (1 agent, 0 rounds) — generic template
+- Harness (5 agents, 2 rounds) — specific clinical citations
+
+### 4. Metrics Display
+Real-time metrics bar shows:
+- ⏱ Elapsed time
+- 🎯 CARC codes matched (e.g., 50, 167, 252)
+- ⚖ Federal protections detected (MHPAEA, No Surprises Act)
+- 🔁 Revision rounds completed
+- 💬 Adversarial critiques generated
+
+---
+
+## Technical Stack
+
+- **Orchestration:** LangGraph (parallel execution, state management)
+- **LLM:** OpenAI GPT-4o
+- **Observability:** W&B Weave
+- **Backend:** Flask
+- **Frontend:** Vanilla JS (no framework)
+- **Data:** 162-case stratified eval set from CA DMHC IMR precedents
+
+---
+
+## Evaluation Details
+
+**Dataset:** 15 real California Independent Medical Review (IMR) denial cases  
+**Scorer:** Adversarial GPT-4o-mini (simulates insurer medical reviewer)  
+**Metric:** Does the appeal survive re-attack?  
+**Results:** View full traces at [wandb.ai/sabhisheksagar200-northeastern-university/denial-defense/weave](https://wandb.ai/sabhisheksagar200-northeastern-university/denial-defense/weave)
+
+---
+
+## Limitations
+
+### What This System Does
+✅ Generates structured appeal arguments with clinical evidence  
+✅ Cites policy criteria and IMR precedent  
+✅ Identifies federal protections (MHPAEA, ACA 1557, No Surprises Act)  
+✅ Simulates adversarial review before submission
+
+### What This System Doesn't Do
+❌ Replace medical or legal advice  
+❌ Guarantee appeal success (real overturn rates vary 40-60%)  
+❌ Access patient medical records automatically  
+❌ Submit appeals directly to insurers
+
+**This is a research prototype.** Appeals generated should be reviewed by qualified professionals before submission.
+
+---
+
+## Roadmap
+
+**Completed:**
+- ✅ Multi-agent harness with adversarial critic
+- ✅ Side-by-side comparison UI
+- ✅ Weave evaluation framework
+- ✅ 15-case quantitative validation
+
+**Next Steps:**
+1. Real-time IMR precedent lookup via MCP
+2. Expand to all 50 states (currently CA-focused)
+3. Clinical trial measuring real overturn rates
+4. Voice interface via Twilio
+5. Authentication for multi-user deployment
+
+---
+
+## Contributing
+
+We welcome contributions! Areas of interest:
+- Additional state-specific denial playbooks
+- Improved regex patterns for CARC code matching
+- UI/UX enhancements
+- Evaluation on larger case sets
+
+---
+
+## Citation
+
+If you use this work, please cite:
+
+```bibtex
+@software{denial_defense_2026,
+  title = {Denial Defense: Multi-Agent AI for Insurance Appeal Letters},
+  author = {Sagar, Abhishek},
+  year = {2026},
+  url = {https://github.com/SandaAbhishekSagar/denial-defense}
+}
+```
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## Contact
+
+**Author:** Abhishek Sagar  
+**Email:** sabhisheksagar200@gmail.com  
+**Demo:** [http://localhost:5000](http://localhost:5000) (after running locally)
+
+---
+
+**Built in 2 hours on Sunday, May 31, 2026.**  
+**Evaluation shows 100% robustness vs 87% baseline.**  
+**We're open-sourcing this because healthcare access shouldn't require technical expertise.**
