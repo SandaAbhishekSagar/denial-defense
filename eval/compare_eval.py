@@ -1,16 +1,16 @@
 """
 Weave evaluation: compare baseline single-agent vs multi-agent harness.
 
-Runs both systems on 30 sampled IMR cases and compares performance using
+Runs both systems on 15 sampled IMR cases and compares performance using
 an adversarial "survives attack" scorer.
 
-Results appear in the Weave dashboard for side-by-side comparison.
+Results appear in the Weave dashboard Evals tab for side-by-side comparison.
 """
 
+import asyncio
 import json
 import os
 import sys
-import io
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -70,6 +70,14 @@ def survives_attack_scorer(output: str, denial_synopsis: str) -> dict:
     Returns:
         {"survives": bool, "weak_points": [str], "score": 0.0 or 1.0}
     """
+    if not output or not isinstance(output, str):
+        return {
+            "survives": False,
+            "weak_points": ["empty or invalid output"],
+            "reasoning": "No output to evaluate",
+            "score": 0.0
+        }
+    
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -131,12 +139,12 @@ Weak appeals have:
 # DATASET PREPARATION
 # ============================================================================
 
-def prepare_dataset(sample_size: int = 15) -> weave.Dataset:
+def build_dataset(n_samples: int = 15) -> weave.Dataset:
     """
     Load IMR eval set and prepare dataset for Weave evaluation.
     
     Args:
-        sample_size: Number of cases to sample (default 15 for faster eval)
+        n_samples: Number of cases to sample (default 15 for faster eval)
         
     Returns:
         Weave Dataset with denial_synopsis and patient_context
@@ -149,13 +157,13 @@ def prepare_dataset(sample_size: int = 15) -> weave.Dataset:
     df = pd.read_parquet(eval_path)
     
     # Sample cases - reduced to 15 for faster turnaround
-    if len(df) > sample_size:
-        df = df.sample(sample_size, random_state=42)
+    if len(df) > n_samples:
+        df = df.sample(n_samples, random_state=42)
     
     print(f"Loaded {len(df)} cases from eval set")
     
     # Convert to Weave dataset format
-    dataset_rows = []
+    rows = []
     for _, row in df.iterrows():
         # Build denial synopsis from IMR fields
         denial_synopsis = f"""Type: {row['Type']}
@@ -166,26 +174,26 @@ Treatment Subcategory: {row.get('TreatmentSubCategory', 'N/A')}
 Determination: {row['Determination']}
 
 IMR Reviewer Findings (excerpt):
-{str(row['Findings'])[:500]}..."""
+{str(row['Findings'])[:400]}..."""
         
         patient_context = f"""Report Year: {row['ReportYear']}
 Diagnosis: {row['DiagnosisCategory']} - {row.get('DiagnosisSubCategory', 'N/A')}
 Treatment: {row['TreatmentCategory']} - {row.get('TreatmentSubCategory', 'N/A')}"""
         
-        dataset_rows.append({
+        rows.append({
             "denial_synopsis": denial_synopsis,
             "patient_context": patient_context
         })
     
-    return weave.Dataset(name="imr-30-sample", rows=dataset_rows)
+    return weave.Dataset(name="imr-eval-sample", rows=rows)
 
 
 # ============================================================================
-# MAIN EVALUATION
+# ASYNC EVALUATION
 # ============================================================================
 
-def main():
-    """Run comparison evaluation: baseline vs harness."""
+async def run_evaluations():
+    """Run both baseline and harness evaluations asynchronously."""
     
     print("=" * 80)
     print("DENIAL DEFENSE - COMPARATIVE EVALUATION")
@@ -196,15 +204,10 @@ def main():
     print("=" * 80)
     print()
     
-    # Prepare dataset
+    # Prepare dataset once
     print(f"[{datetime.now().isoformat()}] Preparing dataset...")
-    try:
-        ds = prepare_dataset(sample_size=15)
-        print(f"[{datetime.now().isoformat()}] ✓ Dataset ready: {len(ds.rows)} cases")
-    except Exception as e:
-        print(f"ERROR preparing dataset: {e}")
-        return 1
-    
+    ds = build_dataset(n_samples=15)
+    print(f"[{datetime.now().isoformat()}] ✓ Dataset ready: {len(ds.rows)} cases")
     print()
     
     # Evaluate baseline
@@ -215,11 +218,11 @@ def main():
         baseline_eval = weave.Evaluation(
             dataset=ds,
             scorers=[survives_attack_scorer],
-            name="baseline-single-agent"
+            name="baseline_single_agent"
         )
-        baseline_results = baseline_eval.evaluate(baseline_system)
+        baseline_summary = await baseline_eval.evaluate(baseline_system)
         print(f"[{datetime.now().isoformat()}] ✓ Baseline evaluation complete")
-        print(f"  Results: {baseline_results}")
+        print(f"  Summary: {baseline_summary}")
     except Exception as e:
         print(f"ERROR in baseline eval: {e}")
         import traceback
@@ -231,17 +234,17 @@ def main():
     print("=" * 80)
     print(f"[{datetime.now().isoformat()}] EVALUATING HARNESS (multi-agent with critic)")
     print("=" * 80)
-    print("WARNING: This will take 15-20 minutes for 15 cases")
+    print("This will take 15-20 minutes for 15 cases...")
     print("=" * 80)
     try:
         harness_eval = weave.Evaluation(
             dataset=ds,
             scorers=[survives_attack_scorer],
-            name="harness-multi-agent"
+            name="multi_agent_harness"
         )
-        harness_results = harness_eval.evaluate(harness_system)
+        harness_summary = await harness_eval.evaluate(harness_system)
         print(f"[{datetime.now().isoformat()}] ✓ Harness evaluation complete")
-        print(f"  Results: {harness_results}")
+        print(f"  Summary: {harness_summary}")
     except Exception as e:
         print(f"ERROR in harness eval: {e}")
         import traceback
@@ -249,13 +252,30 @@ def main():
     
     print()
     print("=" * 80)
-    print(f"[{datetime.now().isoformat()}] ✓ EVALUATION COMPLETE")
+    print(f"[{datetime.now().isoformat()}] ✓ BOTH EVALUATIONS COMPLETE")
     print("=" * 80)
-    print("Check Weave dashboard for side-by-side comparison:")
-    print("https://wandb.ai/denial-defense/weave")
+    print("Visit Weave dashboard → Evals tab → see side-by-side comparison")
+    print("https://wandb.ai/sabhisheksagar200-northeastern-university/denial-defense/weave")
     print("=" * 80)
-    
-    return 0
+
+
+# ============================================================================
+# MAIN
+# ============================================================================
+
+def main() -> int:
+    """Main entry point with async execution."""
+    try:
+        asyncio.run(run_evaluations())
+        return 0
+    except KeyboardInterrupt:
+        print("\n\nEvaluation interrupted by user")
+        return 1
+    except Exception as e:
+        print(f"\nEvaluation failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
 
 
 if __name__ == "__main__":

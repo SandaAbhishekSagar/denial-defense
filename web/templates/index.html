@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Denial Defense - Multi-Agent Appeal Harness</title>
+    <title>Denial Defense — Multi-Agent Insurance Appeal Harness</title>
     <style>
         * {
             margin: 0;
@@ -480,29 +481,35 @@
             
             // Build metrics bar HTML if metrics exist
             let metricsHtml = '';
-            if (data._metrics) {
-                const m = data._metrics;
+            if (data.metrics) {
+                const m = data.metrics;
+                const carcStr = (m.carc_codes_matched && m.carc_codes_matched.length) 
+                    ? m.carc_codes_matched.join(', ') 
+                    : 'none';
+                const protectionsStr = (m.federal_protections_found && m.federal_protections_found.length)
+                    ? m.federal_protections_found.join(', ').replace(/_/g, ' ')
+                    : 'none';
                 metricsHtml = `
                     <div class="metrics-bar">
                         <div class="metric-item">
                             <span class="metric-label">⏱ Time:</span>
-                            <span class="metric-value" id="m-time">${m.elapsed_seconds}s</span>
+                            <span class="metric-value">${m.elapsed_seconds}s</span>
                         </div>
                         <div class="metric-item">
                             <span class="metric-label">🎯 CARC matched:</span>
-                            <span class="metric-value" id="m-carc">${m.carc_codes_matched.join(', ') || 'none'}</span>
+                            <span class="metric-value">${carcStr}</span>
                         </div>
                         <div class="metric-item">
                             <span class="metric-label">⚖ Federal protections:</span>
-                            <span class="metric-value" id="m-protections">${m.federal_protections_found.join(', ') || 'none'}</span>
+                            <span class="metric-value">${protectionsStr}</span>
                         </div>
                         <div class="metric-item">
                             <span class="metric-label">🔁 Rounds:</span>
-                            <span class="metric-value" id="m-rounds">${m.rounds_completed}</span>
+                            <span class="metric-value">${m.rounds_completed || 0}</span>
                         </div>
                         <div class="metric-item">
                             <span class="metric-label">💬 Critiques:</span>
-                            <span class="metric-value" id="m-critiques">${m.critiques_generated}</span>
+                            <span class="metric-value">${m.critiques_generated || 0}</span>
                         </div>
                     </div>
                 `;
@@ -510,12 +517,12 @@
             
             // Build results HTML with metrics
             const resultsHtml = `
-                ${metricsHtml}
-                
                 <div class="section patient">
                     <div class="section-header">Denial Letter</div>
                     <div class="json-display">${JSON.stringify(data.denial, null, 2)}</div>
                 </div>
+                
+                ${metricsHtml}
                 
                 <div class="section patient">
                     <div class="section-header">Round 1: Patient Agent Outputs (Parallel)</div>
@@ -556,9 +563,55 @@
             document.getElementById('results').innerHTML = resultsHtml;
         }
         
+        function escapeHtml(text) {
+            if (typeof text !== 'string') text = JSON.stringify(text, null, 2);
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        
         function displayComparison(data) {
             // Hide loading
             document.getElementById('loading').classList.remove('active');
+            
+            // Build metrics bar HTML if metrics exist
+            let metricsHtml = '';
+            if (data.harness && data.harness.metrics) {
+                const m = data.harness.metrics;
+                const carcStr = (m.carc_codes_matched && m.carc_codes_matched.length)
+                    ? m.carc_codes_matched.join(', ')
+                    : 'none';
+                const protectionsStr = (m.federal_protections_found && m.federal_protections_found.length)
+                    ? m.federal_protections_found.join(', ').replace(/_/g, ' ')
+                    : 'none';
+                metricsHtml = `
+                    <div class="metrics-bar">
+                        <div class="metric-item">
+                            <span class="metric-label">⏱ Time:</span>
+                            <span class="metric-value">${m.elapsed_seconds}s</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">🎯 CARC:</span>
+                            <span class="metric-value">${carcStr}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">⚖ Protections:</span>
+                            <span class="metric-value">${protectionsStr}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">🔁 Rounds:</span>
+                            <span class="metric-value">${m.rounds_completed || 0}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">💬 Critiques:</span>
+                            <span class="metric-value">${m.critiques_generated || 0}</span>
+                        </div>
+                    </div>
+                `;
+            }
             
             // Build comparison HTML
             const comparisonHtml = `
@@ -567,22 +620,24 @@
                     <div class="json-display">${JSON.stringify(data.denial, null, 2)}</div>
                 </div>
                 
+                ${metricsHtml}
+                
                 <div class="section patient">
                     <div class="section-header">Side-by-Side Comparison</div>
-                    <div class="comparison-grid">
-                        <div class="compare-col baseline">
-                            <h3>${data.baseline.label}</h3>
-                            <p style="font-size: 0.85em; color: #666; margin-bottom: 1em;">
-                                ${data.baseline.agents_used} agent, ${data.baseline.rounds} rounds
-                            </p>
-                            <pre>${data.baseline.appeal_letter}</pre>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5em; margin:1em 0; align-items:start;">
+                        <div style="padding:1.25em; border-left:4px solid #9ca3af; background:#f9fafb; border-radius:4px; max-height:600px; overflow-y:auto;">
+                            <h3 style="margin-top:0; font-size:0.95em; color:#4b5563; position:sticky; top:0; background:#f9fafb; padding:0.5em 0; border-bottom:1px solid #e5e7eb;">
+                                ${escapeHtml(data.baseline.label)}
+                                <span style="font-weight:normal; font-size:0.85em; color:#6b7280;"> — 1 agent, 0 rounds</span>
+                            </h3>
+                            <pre style="white-space:pre-wrap; font-family:inherit; font-size:0.88em; line-height:1.55; margin:0.75em 0 0 0;">${escapeHtml(data.baseline.appeal_letter)}</pre>
                         </div>
-                        <div class="compare-col harness">
-                            <h3>${data.harness.label}</h3>
-                            <p style="font-size: 0.85em; color: #666; margin-bottom: 1em;">
-                                ${data.harness.agents_used} agents, ${data.harness.rounds} rounds
-                            </p>
-                            <pre>${data.harness.final_verdict}</pre>
+                        <div style="padding:1.25em; border-left:4px solid #10b981; background:#f0fdf4; border-radius:4px; max-height:600px; overflow-y:auto;">
+                            <h3 style="margin-top:0; font-size:0.95em; color:#065f46; position:sticky; top:0; background:#f0fdf4; padding:0.5em 0; border-bottom:1px solid #d1fae5;">
+                                ${escapeHtml(data.harness.label)}
+                                <span style="font-weight:normal; font-size:0.85em; color:#047857;"> — 5 agents, 2 rounds</span>
+                            </h3>
+                            <pre style="white-space:pre-wrap; font-family:inherit; font-size:0.88em; line-height:1.55; margin:0.75em 0 0 0;">${escapeHtml(data.harness.final_verdict)}</pre>
                         </div>
                     </div>
                     
@@ -621,7 +676,7 @@
                     </div>
                 </div>
                 
-                <button class="refresh-button" onclick="refresh()">Run Another Case</button>
+                <button onclick="location.reload()" style="margin-top:1em; padding:0.75em 1.5em; background:#10b981; color:white; border:none; border-radius:4px; cursor:pointer; font-family:inherit;">Run Another Case</button>
             `;
             
             document.getElementById('results').innerHTML = comparisonHtml;

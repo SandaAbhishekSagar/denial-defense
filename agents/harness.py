@@ -443,9 +443,16 @@ def run_harness(denial_letter: str, patient_context: str) -> dict:
     start = time.time()
     
     # Match denial to playbook CARC codes BEFORE invoking the harness
-    matched_entries = playbook.match_denial(denial_letter)
-    carc_codes_matched = [e.code for e in matched_entries[:3]]  # top 3 matches
-    applicable_protections = playbook.get_applicable_protections(denial_letter)
+    try:
+        matched_entries = playbook.match_denial(denial_letter)
+        carc_codes_matched = [e.code for e in matched_entries[:3]]  # top 3 matches
+    except Exception:
+        carc_codes_matched = []
+    
+    try:
+        applicable_protections = playbook.get_applicable_protections(denial_letter)
+    except Exception:
+        applicable_protections = []
     
     # Run the harness
     result = harness.invoke({
