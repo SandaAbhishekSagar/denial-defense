@@ -1,6 +1,8 @@
 # Denial Defense
 
-An open-source healthcare AI research project that helps patients draft insurance appeal letters using a multi-agent system.
+An open-source healthcare AI research project that helps patients draft insurance appeal letters using a multi-agent system with adversarial critique.
+
+> **🚀 NEW: Multi-Agent Harness Complete!** See [STATUS.md](STATUS.md) for quick start guide.
 
 > **Note**: The CA DMHC IMR dataset (81MB CSV) is not included in this repository due to GitHub file size limits. 
 > Download it from: https://data.chhs.ca.gov/dataset/independent-medical-review-imr-determinations-trend
@@ -44,6 +46,29 @@ denial-defense/
 ```
 
 ## Quick Start
+
+### For the Multi-Agent Harness (NEW!)
+
+**See [STATUS.md](STATUS.md) for complete setup instructions.**
+
+Quick version:
+```bash
+# 1. Configure API keys
+cp .env.example .env
+# Edit .env and add OPENAI_API_KEY and WANDB_API_KEY
+
+# 2. Test the baseline agent
+python agents/baseline.py
+
+# 3. Test the multi-agent harness
+python agents/harness.py
+
+# 4. Launch the web UI
+python web/app.py
+# Open http://localhost:5000
+```
+
+### For Data Collection
 
 ### 1. Install Dependencies
 
@@ -133,39 +158,62 @@ All data sources are publicly available, and collection respects robots.txt, rat
 - [x] Collect CA DMHC IMR dataset
 - [x] Collect state appeal letter samples
 - [x] Implement supplemental data scrapers
-- [ ] Reach collection targets (30+ policies, 15+ articles, 20+ stories)
+- [x] Build denial playbook with CARC codes
 
-### Phase 2: Data Processing
-- [ ] Clean and structure IMR dataset
-- [ ] Extract denial patterns and themes
-- [ ] Categorize by procedure, insurer, and outcome
-- [ ] Build searchable index
+### Phase 2: Data Processing ✅
+- [x] Clean and structure IMR dataset
+- [x] Create stratified evaluation set (162 cases)
+- [x] Extract denial patterns by CARC code
+- [x] Build searchable playbook
 
-### Phase 3: Multi-Agent System
-- [ ] Appeal analyzer agent
-- [ ] Policy researcher agent
-- [ ] Letter drafter agent
-- [ ] Evidence compiler agent
-- [ ] Coordinator agent
+### Phase 3: Multi-Agent System ✅
+- [x] Medical Necessity agent (clinical evidence)
+- [x] Policy Citation agent (criteria matching)
+- [x] Precedent agent (IMR case law)
+- [x] Insurer Defense critic (adversarial attacks)
+- [x] Supervisor agent (orchestration + synthesis)
+- [x] Round-based revision (2 rounds)
 
-### Phase 4: Evaluation
-- [ ] Test on demo cases
-- [ ] Evaluate appeal quality
-- [ ] Measure success factors
+### Phase 4: Evaluation ⏳
+- [x] Baseline single-agent system
+- [x] Weave evaluation framework
+- [x] Adversarial "survives attack" scorer
+- [ ] Run full 30-case comparison
 
-### Phase 5: Web Interface
-- [ ] Upload denial letter
-- [ ] Select insurer and procedure
-- [ ] Generate appeal draft
-- [ ] Export to Word/PDF
+### Phase 5: Web Interface ✅
+- [x] Flask backend with case selector
+- [x] Single-page UI with 3 demo cases
+- [x] Real-time harness execution
+- [x] Structured output display
 
 ## Technology Stack
 
 - **Language**: Python 3.8+
+- **LLM**: OpenAI GPT-4o
+- **Orchestration**: LangGraph (multi-agent with parallel execution)
+- **Observability**: W&B Weave
+- **Web Framework**: Flask + vanilla JS
 - **Web Scraping**: requests, BeautifulSoup, Playwright
 - **Data Processing**: pandas, numpy
-- **NLP/AI**: (TBD - likely OpenAI/Anthropic API)
-- **Web Framework**: (TBD - likely Flask or FastAPI)
+
+## Architecture
+
+**Pattern:** Supervisor-worker with adversarial critic and round-based revision
+
+The system uses 3 patient-side agents working in parallel (Medical Necessity, Policy Citation, Precedent), an adversarial critic with no external tools (Insurer Defense), and a supervisor for orchestration. Appeals go through 2 rounds of revision based on critique.
+
+See [HARNESS_README.md](HARNESS_README.md) for technical details.
+
+## Demo Cases
+
+1. **Oscar Health — Cromolyn for MCAS**  
+   Pharmacy denial for experimental treatment, ICD-10 mismatch
+
+2. **Cigna — Spinal Cord Stimulator Trial**  
+   DME denial for chronic pain, step therapy documentation
+
+3. **Anthem — Residential SUD with MHPAEA Parity**  
+   Mental health denial, federal law violation
 
 ## Contributing
 
@@ -217,4 +265,6 @@ This is a hackathon/research project. For questions about data collection, contr
 
 ---
 
-**Note**: This project is in active development. Data collection is functional, but the multi-agent system and web interface are still in planning/development.
+**Project Status**: ✅ **Multi-agent harness complete and ready for testing**  
+**Last Updated**: May 31, 2026  
+**See [STATUS.md](STATUS.md) for detailed build report and quick start guide**

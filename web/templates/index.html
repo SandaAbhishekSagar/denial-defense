@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denial Defense - Multi-Agent Appeal Harness</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Source Code Pro', monospace;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .case-selector {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .case-selector h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .case-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .case-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: inherit;
+            transition: background 0.2s;
+            text-align: left;
+        }
+        
+        .case-button:hover {
+            background: #2980b9;
+        }
+        
+        .case-button:active {
+            background: #21618c;
+        }
+        
+        .case-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .timer {
+            font-size: 24px;
+            color: #3498db;
+            margin: 10px 0;
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .results.active {
+            display: block;
+        }
+        
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .section.patient {
+            border-left: 4px solid #3498db;
+        }
+        
+        .section.critic {
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .section.final {
+            border-left: 4px solid #27ae60;
+        }
+        
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .agent-output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .agent-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .json-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            overflow-x: auto;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .critique-item {
+            background: #fff5f5;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #feb2b2;
+            margin-bottom: 15px;
+        }
+        
+        .critique-header {
+            font-weight: 600;
+            color: #c53030;
+            margin-bottom: 10px;
+        }
+        
+        .verdict-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #2d3748;
+            white-space: pre-wrap;
+        }
+        
+        .refresh-button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: inherit;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        
+        .refresh-button:hover {
+            background: #229954;
+        }
+        
+        .error {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #feb2b2;
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        /* Comparison mode styles */
+        .compare-toggle {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .compare-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .compare-toggle label {
+            cursor: pointer;
+            font-size: 14px;
+            user-select: none;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+            margin: 1em 0;
+        }
+        
+        .compare-col {
+            padding: 1em;
+            border-radius: 6px;
+            background: #f9f9f9;
+        }
+        
+        .compare-col.baseline {
+            border-left: 4px solid #888;
+        }
+        
+        .compare-col.harness {
+            border-left: 4px solid #10b981;
+        }
+        
+        .compare-col h3 {
+            margin-top: 0;
+            font-size: 0.95em;
+            color: #555;
+            margin-bottom: 1em;
+        }
+        
+        .compare-col pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .breakdown-toggle {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        .breakdown-toggle:hover {
+            background: #d0d0d0;
+        }
+        
+        .breakdown-content {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .breakdown-content.active {
+            display: block;
+        }
+        
+        /* Metrics bar */
+        .metrics-bar {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .metric-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .metric-label {
+            opacity: 0.8;
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Denial Defense — Multi-Agent Insurance Appeal Harness</h1>
+        <p>Architecture: Supervisor-worker with adversarial critic and round-based revision</p>
+    </div>
+    
+    <div class="compare-toggle">
+        <input type="checkbox" id="compareMode" />
+        <label for="compareMode">Show side-by-side comparison (baseline vs harness)</label>
+    </div>
+    
+    <div class="case-selector" id="caseSelector">
+        <h2>Select a Demo Case</h2>
+        <div class="case-buttons" id="caseButtons">
+            {% for case_id, case_data in cases.items() %}
+            <button class="case-button" onclick="runCase('{{ case_id }}')">
+                <strong>{{ case_data.display_name }}</strong><br>
+                <small style="opacity: 0.8;">{{ case_data.patient_context.diagnosis }} → {{ case_data.patient_context.treatment_requested }}</small>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h2>Running Multi-Agent Harness...</h2>
+        <p style="margin: 10px 0; color: #666;">This takes 60-90 seconds</p>
+        <div class="timer" id="timer">0s</div>
+    </div>
+    
+    <div class="results" id="results">
+        <div class="section patient">
+            <div class="section-header">Denial Letter</div>
+            <div class="json-display" id="denialDisplay"></div>
+        </div>
+        
+        <div class="section patient">
+            <div class="section-header">Round 1: Patient Agent Outputs (Parallel)</div>
+            <div class="agent-grid">
+                <div class="agent-output">
+                    <div class="agent-name">Medical Necessity</div>
+                    <div class="json-display" id="medicalDisplay"></div>
+                </div>
+                <div class="agent-output">
+                    <div class="agent-name">Policy Citation</div>
+                    <div class="json-display" id="policyDisplay"></div>
+                </div>
+                <div class="agent-output">
+                    <div class="agent-name">Precedent</div>
+                    <div class="json-display" id="precedentDisplay"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section critic">
+            <div class="section-header">Critiques (Adversarial Attacks)</div>
+            <div id="critiquesDisplay"></div>
+        </div>
+        
+        <div class="section final">
+            <div class="section-header">Final Verdict (Supervisor Synthesis)</div>
+            <div class="verdict-text" id="verdictDisplay"></div>
+        </div>
+        
+        <button class="refresh-button" onclick="refresh()">Run Another Case</button>
+    </div>
+    
+    <script>
+        let timerInterval = null;
+        let startTime = null;
+        
+        function runCase(caseId) {
+            // Check if comparison mode is enabled
+            const compareMode = document.getElementById('compareMode').checked;
+            const endpoint = compareMode ? `/compare/${caseId}` : `/run/${caseId}`;
+            
+            // Hide case selector, show loading
+            document.getElementById('caseSelector').style.display = 'none';
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('loading').classList.add('active');
+            
+            // Update loading message
+            const loadingMsg = compareMode ? 'Running baseline + harness comparison...' : 'Running Multi-Agent Harness...';
+            document.getElementById('loading').querySelector('h2').textContent = loadingMsg;
+            
+            // Start timer
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 100);
+            
+            // Call API
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(timerInterval);
+                
+                if (data.status === 'error') {
+                    showError(data.message, data.detail);
+                } else {
+                    if (compareMode) {
+                        displayComparison(data);
+                    } else {
+                        displayResults(data);
+                    }
+                }
+            })
+            .catch(error => {
+                clearInterval(timerInterval);
+                showError('Network error', error.toString());
+            });
+        }
+        
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timer').textContent = elapsed + 's';
+        }
+        
+        function displayResults(data) {
+            // Hide loading, show results
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('results').classList.add('active');
+            
+            // Build metrics bar HTML if metrics exist
+            let metricsHtml = '';
+            if (data._metrics) {
+                const m = data._metrics;
+                metricsHtml = `
+                    <div class="metrics-bar">
+                        <div class="metric-item">
+                            <span class="metric-label">⏱ Time:</span>
+                            <span class="metric-value" id="m-time">${m.elapsed_seconds}s</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">🎯 CARC matched:</span>
+                            <span class="metric-value" id="m-carc">${m.carc_codes_matched.join(', ') || 'none'}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">⚖ Federal protections:</span>
+                            <span class="metric-value" id="m-protections">${m.federal_protections_found.join(', ') || 'none'}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">🔁 Rounds:</span>
+                            <span class="metric-value" id="m-rounds">${m.rounds_completed}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">💬 Critiques:</span>
+                            <span class="metric-value" id="m-critiques">${m.critiques_generated}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Build results HTML with metrics
+            const resultsHtml = `
+                ${metricsHtml}
+                
+                <div class="section patient">
+                    <div class="section-header">Denial Letter</div>
+                    <div class="json-display">${JSON.stringify(data.denial, null, 2)}</div>
+                </div>
+                
+                <div class="section patient">
+                    <div class="section-header">Round 1: Patient Agent Outputs (Parallel)</div>
+                    <div class="agent-grid">
+                        <div class="agent-output">
+                            <div class="agent-name">Medical Necessity</div>
+                            <div class="json-display">${JSON.stringify(data.round_1.medical_necessity, null, 2)}</div>
+                        </div>
+                        <div class="agent-output">
+                            <div class="agent-name">Policy Citation</div>
+                            <div class="json-display">${JSON.stringify(data.round_1.policy_citation, null, 2)}</div>
+                        </div>
+                        <div class="agent-output">
+                            <div class="agent-name">Precedent</div>
+                            <div class="json-display">${JSON.stringify(data.round_1.precedent, null, 2)}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section critic">
+                    <div class="section-header">Critiques (Adversarial Attacks)</div>
+                    ${data.critiques.map((critique, i) => `
+                        <div class="critique-item">
+                            <div class="critique-header">Round ${i + 1} Critique</div>
+                            <div class="json-display">${JSON.stringify(critique, null, 2)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="section final">
+                    <div class="section-header">Final Verdict (Supervisor Synthesis)</div>
+                    <div class="verdict-text">${data.final_verdict}</div>
+                </div>
+                
+                <button class="refresh-button" onclick="refresh()">Run Another Case</button>
+            `;
+            
+            document.getElementById('results').innerHTML = resultsHtml;
+        }
+        
+        function displayComparison(data) {
+            // Hide loading
+            document.getElementById('loading').classList.remove('active');
+            
+            // Build comparison HTML
+            const comparisonHtml = `
+                <div class="section patient">
+                    <div class="section-header">Original Denial</div>
+                    <div class="json-display">${JSON.stringify(data.denial, null, 2)}</div>
+                </div>
+                
+                <div class="section patient">
+                    <div class="section-header">Side-by-Side Comparison</div>
+                    <div class="comparison-grid">
+                        <div class="compare-col baseline">
+                            <h3>${data.baseline.label}</h3>
+                            <p style="font-size: 0.85em; color: #666; margin-bottom: 1em;">
+                                ${data.baseline.agents_used} agent, ${data.baseline.rounds} rounds
+                            </p>
+                            <pre>${data.baseline.appeal_letter}</pre>
+                        </div>
+                        <div class="compare-col harness">
+                            <h3>${data.harness.label}</h3>
+                            <p style="font-size: 0.85em; color: #666; margin-bottom: 1em;">
+                                ${data.harness.agents_used} agents, ${data.harness.rounds} rounds
+                            </p>
+                            <pre>${data.harness.final_verdict}</pre>
+                        </div>
+                    </div>
+                    
+                    <button class="breakdown-toggle" onclick="toggleBreakdown()">
+                        Show round-by-round breakdown ▼
+                    </button>
+                    
+                    <div class="breakdown-content" id="breakdown">
+                        <div class="section patient" style="margin-top: 20px;">
+                            <div class="section-header">Round 1: Patient Agent Outputs (Parallel)</div>
+                            <div class="agent-grid">
+                                <div class="agent-output">
+                                    <div class="agent-name">Medical Necessity</div>
+                                    <div class="json-display">${JSON.stringify(data.harness.round_1.medical_necessity, null, 2)}</div>
+                                </div>
+                                <div class="agent-output">
+                                    <div class="agent-name">Policy Citation</div>
+                                    <div class="json-display">${JSON.stringify(data.harness.round_1.policy_citation, null, 2)}</div>
+                                </div>
+                                <div class="agent-output">
+                                    <div class="agent-name">Precedent</div>
+                                    <div class="json-display">${JSON.stringify(data.harness.round_1.precedent, null, 2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="section critic" style="margin-top: 20px;">
+                            <div class="section-header">Critiques (Adversarial Attacks)</div>
+                            ${data.harness.critiques.map((c, i) => `
+                                <div class="critique-item">
+                                    <div class="critique-header">Round ${i + 1} Critique</div>
+                                    <div class="json-display">${JSON.stringify(c, null, 2)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="refresh-button" onclick="refresh()">Run Another Case</button>
+            `;
+            
+            document.getElementById('results').innerHTML = comparisonHtml;
+            document.getElementById('results').classList.add('active');
+        }
+        
+        function toggleBreakdown() {
+            const breakdown = document.getElementById('breakdown');
+            const button = document.querySelector('.breakdown-toggle');
+            breakdown.classList.toggle('active');
+            button.textContent = breakdown.classList.contains('active') 
+                ? 'Hide round-by-round breakdown ▲'
+                : 'Show round-by-round breakdown ▼';
+        }
+        
+        function showError(message, detail) {
+            document.getElementById('loading').classList.remove('active');
+            
+            const errorHtml = `
+                <div class="error">
+                    <div class="error-title">Error: ${message}</div>
+                    <pre style="font-size: 12px; margin-top: 10px; overflow-x: auto;">${detail || 'No additional details'}</pre>
+                </div>
+            `;
+            
+            document.getElementById('results').innerHTML = errorHtml + document.getElementById('results').innerHTML;
+            document.getElementById('results').classList.add('active');
+        }
+        
+        function refresh() {
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('caseSelector').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

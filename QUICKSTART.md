@@ -1,174 +1,65 @@
-# Quick Reference - Denial Defense Data Collection
+# 🚀 QUICK START CARD
 
-## Installation
+**Status:** ✅ Build Complete | ⏰ 6+ hours to deadline
 
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install Playwright browsers (optional, for JS-heavy sites)
-playwright install
-```
-
-## Common Commands
-
-### Setup Only
-```bash
-# Create directory structure without scraping
-python scripts/collect_supplemental_data.py --setup-only
-```
-
-### Run Everything
-```bash
-# Setup + all scrapers + validation
-python scripts/collect_supplemental_data.py --all
-```
-
-### Individual Scrapers
-```bash
-# State appeal resources (recommended first - fast and reliable)
-python scripts/collect_supplemental_data.py --skip-setup --only state_resources
-
-# ProPublica articles
-python scripts/collect_supplemental_data.py --skip-setup --only propublica
-
-# KFF Bill of the Month stories
-python scripts/collect_supplemental_data.py --skip-setup --only kff
-
-# Insurer medical policies (may need manual steps)
-python scripts/collect_supplemental_data.py --skip-setup --only insurer_policies
-```
-
-### Shell Scripts
-
-**PowerShell (Windows):**
-```powershell
-# Run everything with venv management
-.\scripts\collect.ps1
-```
-
-**Bash (Linux/Mac):**
-```bash
-# Run everything with venv management
-bash scripts/collect.sh
-```
-
-## Check Results
-
-### View logs
-```bash
-# Full log
-cat logs/collection.log
-
-# Last 50 lines
-tail -n 50 logs/collection.log
-
-# Summary report
-cat logs/collection_summary.md
-```
-
-### Count files
-```bash
-# Count by category (PowerShell)
-Get-ChildItem -Path "data\raw" -Recurse -File | Group-Object Directory | Select-Object Name, Count
-
-# Count by category (Bash)
-find data/raw -type f | grep -v '.gitkeep' | wc -l
-```
-
-### Verify downloads
-```bash
-# Check Washington state files (PowerShell)
-Get-ChildItem -Path "data\raw\state_appeal_resources\washington" -File
-
-# Check Washington state files (Bash)
-ls -lh data/raw/state_appeal_resources/washington/
-```
-
-## Troubleshooting
-
-### Unicode errors on Windows
-```powershell
-$env:PYTHONIOENCODING="utf-8"
-python scripts/collect_supplemental_data.py --all
-```
-
-### Rate limiting (429 errors)
-Edit `scripts/collect_supplemental_data.py`:
-```python
-RATE_LIMIT_SECONDS = 3.0  # Increase from 2.0 to 3.0
-```
-
-### Missing dependencies
-```bash
-pip install --upgrade -r requirements.txt
-```
-
-### Playwright not installed
-```bash
-pip install playwright
-playwright install chromium
-```
-
-## File Structure Reference
-
-```
-data/raw/
-├── imr/                           # 4 files - CA DMHC IMR dataset
-├── sample_appeals/                # 3 files - Sample letters from states
-├── denial_letters/
-│   ├── propublica/               # Denial letters from reporting
-│   └── reddit/                   # Manually collected
-├── insurer_policies/             # Medical policies by insurer
-│   ├── anthem/
-│   ├── aetna/
-│   ├── cigna/
-│   ├── uhc/
-│   ├── oscar/
-│   └── bcbs_fep/
-├── propublica_articles/          # "Uncovered" series articles
-├── kff_bill_of_month/            # "Bill of the Month" stories
-└── state_appeal_resources/       # Appeal guides by state
-    ├── washington/
-    ├── north_carolina/
-    ├── new_york/
-    ├── texas/
-    └── massachusetts/
-```
-
-## Target Goals
-
-- [ ] 30+ insurer policy PDFs
-- [ ] 15+ ProPublica articles
-- [ ] 20+ KFF Bill of the Month stories
-- [x] No PHI detected
-- [x] Clean directory structure
-
-## Quick Validation
+## Next 3 Steps (5 minutes)
 
 ```bash
-# Run validation without scraping
-python scripts/collect_supplemental_data.py --skip-setup
+# 1. Create .env
+cp .env.example .env
 
-# Check summary
-cat logs/collection_summary.md
+# 2. Edit .env - add your keys:
+#    OPENAI_API_KEY=sk-...
+#    WANDB_API_KEY=...
+
+# 3. Test baseline
+python agents/baseline.py
 ```
 
-## Notes
-
-- Script is idempotent - safe to run multiple times
-- Existing files are never overwritten
-- Rate limiting: 1 request per 2 seconds per domain
-- Respects robots.txt automatically
-- All operations logged to `logs/collection.log`
-
-## Getting Help
-
+If baseline works ✅ → Run harness:
 ```bash
-# Show all options
-python scripts/collect_supplemental_data.py --help
-
-# Check documentation
-cat DATA_COLLECTION.md
-cat README.md
+python agents/harness.py
 ```
+
+If harness works ✅ → Launch web UI:
+```bash
+python web/app.py
+# Open http://localhost:5000
+```
+
+---
+
+## 📚 Documentation Map
+
+- **LAUNCH.md** ← Start here (you are here!)
+- **STATUS.md** - Full build report + troubleshooting
+- **HARNESS_README.md** - Technical documentation
+- **BUILD_SUMMARY.md** - Implementation details
+
+---
+
+## 🎯 What's Built
+
+✅ Multi-agent harness (LangGraph)  
+✅ 6 agent prompts (3 patient + critic + supervisor + baseline)  
+✅ Flask web UI (3 demo cases)  
+✅ Weave evaluation  
+✅ Complete docs
+
+---
+
+## ⚡ If Stuck
+
+1. Run verification: `python scripts/verify_setup.py`
+2. Check STATUS.md troubleshooting section
+3. All code includes error handling - read error messages
+
+---
+
+## 🎤 30-Second Pitch
+
+"Three patient agents work in parallel pulling clinical evidence, policy criteria, and precedent. An adversarial critic — simulating the insurer's medical reviewer — attacks the weakest claim. Patient agents revise. Two rounds of critique. The appeal you get is a third draft that survived two attacks, backed by real California IMR precedent from 42,000 cases."
+
+---
+
+**GO!** Add API keys and test! 🚀
