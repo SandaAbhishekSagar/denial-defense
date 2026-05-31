@@ -43,6 +43,10 @@ A multi-agent AI system that generates appeal letters **already battle-tested ag
 
 **The letter you get is a third draft that already survived two attacks.**
 
+![LangGraph trace map — parallel agents, critic, and supervisor rounds](prompts/pitch_asserts/map.png)
+
+Each run is fully traced in W&B Weave: three patient agents fan out in parallel, the insurer critic attacks, agents revise, and the supervisor synthesizes the final appeal.
+
 ---
 
 ## Proof: 100% vs 87%
