@@ -1,0 +1,122 @@
+{
+  "accrual_periodicity": "other",
+  "additional_limitations": "",
+  "citation": "DMHC IMR Data, 2001 - Current",
+  "contact_email": "OpenData@dmhc.ca.gov",
+  "data_collection_tool": "http://wpso.dmhc.ca.gov/imr/",
+  "data_license": "Terms of Use",
+  "de_identification_method": "",
+  "description": "This data is from the California Department of Managed Health Care (DMHC). It contains all decisions from Independent Medical Reviews (IMR) administered by the DMHC since January 1, 2001. An IMR is an independent review of a denied, delayed, or modified health care service that the health plan has determined to be not medically necessary, experimental/investigational or non-emergent/urgent. If the IMR is decided in an enrollees favor, the health plan must authorize the service or treatment requested.",
+  "extras": {
+    "twitter_popup": []
+  },
+  "geo_coverage": "Statewide",
+  "geographic_granularity": "statewide",
+  "keywords": [
+    "dmhc",
+    "hmo help center",
+    "imr",
+    "independent medical review"
+  ],
+  "limitations": "Limitations",
+  "name": "independent-medical-review-imr-determinations-trend",
+  "program_web_page": "https://www.dmhc.ca.gov/AbouttheDMHC.aspx#help",
+  "related_resources": "",
+  "resources": [
+    {
+      "format": "CSV",
+      "hash": "f77a6dbaccf63ee5553031a108bba042",
+      "name": "independent-medical-review-imr-determinations-trend",
+      "path": "independent-medical-review-imr-determinations-trend.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "ReferenceID",
+            "type": "string"
+          },
+          {
+            "name": "ReportYear",
+            "type": "string"
+          },
+          {
+            "name": "DiagnosisCategory",
+            "type": "string"
+          },
+          {
+            "name": "DiagnosisSubCategory",
+            "type": "string"
+          },
+          {
+            "name": "TreatmentCategory",
+            "type": "string"
+          },
+          {
+            "name": "TreatmentSubCategory",
+            "type": "string"
+          },
+          {
+            "name": "Determination",
+            "type": "string"
+          },
+          {
+            "name": "Type",
+            "type": "string"
+          },
+          {
+            "name": "AgeRange",
+            "type": "string"
+          },
+          {
+            "name": "PatientGender",
+            "type": "string"
+          },
+          {
+            "name": "IMRType",
+            "type": "string"
+          },
+          {
+            "name": "DaysToReview",
+            "type": "string"
+          },
+          {
+            "name": "DaysToAdopt",
+            "type": "string"
+          },
+          {
+            "name": "Findings",
+            "type": "string"
+          }
+        ]
+      },
+      "sources": [
+        {
+          "path": "https://data.chhs.ca.gov/dataset/b79b3447-4c10-4ae6-84e2-1076f83bb24e/resource/3340c5d7-4054-4d03-90e0-5f44290ed095/download/independent-medical-review-imr-determinations-trends.csv",
+          "title": "Independent Medical Review (IMR) Determinations, Trend"
+        }
+      ],
+      "title": "Independent Medical Review (IMR) Determinations, Trend"
+    },
+    {
+      "description": "This data is from the California Department of Managed Health Care (DMHC). It contains all decisions from Independent Medical Reviews (IMR) administered by the DMHC since January 1, 2001. An IMR is an independent review of a denied, delayed, or modified health care service that the health plan has determined to be not medically necessary, experimental/investigational or non-emergent/urgent. If the IMR is decided in an enrollees favor, the health plan must authorize the service or treatment requested.",
+      "format": "PDF",
+      "name": "data-dictionary",
+      "path": "data-dictionary.pdf",
+      "sources": [
+        {
+          "path": "https://data.chhs.ca.gov/dataset/b79b3447-4c10-4ae6-84e2-1076f83bb24e/resource/2c5c2144-138f-4feb-b2af-a1176995e1b1/download/imrdatadictionary.pdf",
+          "title": "data-dictionary"
+        }
+      ],
+      "title": "data-dictionary"
+    }
+  ],
+  "secondary_sources": "",
+  "sources": [
+    {
+      "name": "Department of Managed Health Care, Help Center, Consumer Complaint Division",
+      "web": "https://www.dmhc.ca.gov/FileaComplaint/IndependentMedicalReviewandComplaintReports.aspx"
+    }
+  ],
+  "temporal_coverage": "2001 - Current",
+  "title": "Independent Medical Review (IMR) Determinations, Trend"
+}

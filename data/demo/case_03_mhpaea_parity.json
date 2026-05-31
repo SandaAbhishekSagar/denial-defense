@@ -1,0 +1,116 @@
+{
+  "case_id": "case_03_mhpaea_parity",
+  "display_name": "Anthem — Residential SUD with MHPAEA Parity",
+  "category": "behavioral_health_federal_protection",
+  "stage_priority": 3,
+  "use_in": "finalist_round",
+  "source_provenance": "Fully synthetic. Pattern modeled on real MHPAEA parity disputes; ASAM Criteria 4th Edition and 29 CFR 2590.712 references are real and cite-able.",
+  "denial_letter": {
+    "insurer": "Anthem Blue Cross",
+    "date": "2026-03-22",
+    "service": "ASAM Level 3.5 — Clinically Managed High-Intensity Residential Treatment for SUD",
+    "duration_requested": "30 days",
+    "denial_text": "This letter is to inform you that the requested level of care is not authorized.\n\nReason: Based on the clinical information provided, your treatment needs can be met at a lower level of care. ASAM Level 2.1 — Intensive Outpatient Program — is appropriate for your current presentation. Residential treatment is not medically necessary at this time.\n\nYou have completed medically supervised withdrawal management (Level 3.7-WM) and are clinically stable for transition to outpatient services.",
+    "inferred_carc": ["CARC_50"],
+    "inferred_rarc": ["N115"]
+  },
+  "patient_context": {
+    "age": 34,
+    "gender": "Female",
+    "diagnosis_icd10_primary": "F10.20",
+    "diagnosis_text_primary": "Alcohol Use Disorder, severe",
+    "diagnosis_icd10_secondary": "F43.10",
+    "diagnosis_text_secondary": "Post-Traumatic Stress Disorder, moderate",
+    "clinical_findings": [
+      "Just completed inpatient medically managed withdrawal (Level 3.7-WM, 5 days)",
+      "Active PTSD symptoms during withdrawal — nightmares, hypervigilance",
+      "Lives alone in apartment where prior drinking occurred",
+      "No supportive sober network in immediate environment"
+    ],
+    "asam_dimensional_assessment": {
+      "dimension_1_acute_intoxication": "Resolved post-withdrawal",
+      "dimension_2_biomedical": "Stable",
+      "dimension_3_emotional_behavioral": "HIGH — active PTSD, high anxiety",
+      "dimension_4_readiness_to_change": "Moderate, ambivalent",
+      "dimension_5_relapse_potential": "HIGH — two prior IOP failures (2022, 2024) with relapse within 14 days",
+      "dimension_6_recovery_environment": "HIGH RISK — unsafe living situation, no sober supports"
+    },
+    "prior_treatment_history": [
+      {"level": "Level 2.1 IOP", "year": 2022, "outcome": "relapse within 14 days of discharge"},
+      {"level": "Level 2.1 IOP", "year": 2024, "outcome": "relapse within 10 days of discharge"}
+    ],
+    "treating_clinician_recommendation": "ASAM Level 3.5 residential, 30 days, with PTSD-informed concurrent treatment"
+  },
+  "plan_benefit_structure": {
+    "sud_residential_coverage": "Covered up to 30 days per year, requires prior authorization, 'least restrictive setting' criterion applied",
+    "medsurg_residential_coverage": "Covered without quantitative day limits, requires prior authorization, NO 'least restrictive setting' criterion applied",
+    "parity_violation_flag": "Disparate NQTLs applied to SUD vs medical/surgical residential — potential MHPAEA violation"
+  },
+  "expected_round_1": {
+    "medical_necessity_output": {
+      "claim": "Patient meets ASAM Level 3.5 criteria across three dimensions.",
+      "evidence": [
+        "ASAM Criteria 4th Edition Dimension 3 (Emotional/Behavioral): HIGH — active PTSD, high anxiety post-withdrawal",
+        "ASAM Dimension 5 (Relapse Potential): HIGH — two documented IOP failures with rapid relapse",
+        "ASAM Dimension 6 (Recovery Environment): HIGH RISK — unsafe living, no sober supports",
+        "ASAM standard: appropriate level of care matched to dimensional scores, not 'least restrictive'"
+      ]
+    },
+    "policy_citation_output": {
+      "claim": "Patient meets Anthem's clinical UM guideline criteria for SUD residential treatment.",
+      "evidence": [
+        "Documented severe SUD with comorbid mental health condition",
+        "Failed lower levels of care (two prior IOP attempts)",
+        "Unsafe living environment"
+      ]
+    },
+    "precedent_output": {
+      "claim": "Comparable parity-based overturns established in IMR and DOL enforcement.",
+      "evidence": [
+        "Wit v. United Behavioral Health (9th Cir. 2023) — generic medical necessity criteria more restrictive than generally accepted standards constitute parity violations",
+        "Multiple 2024-2025 DOL enforcement actions against insurers for MHPAEA NQTL violations on SUD residential",
+        "California DMHC IMR pattern: 'least restrictive setting' criterion applied only to SUD has been challenged"
+      ]
+    }
+  },
+  "expected_insurer_defense_round_1": {
+    "weakest_claim_attacked": "medical_necessity",
+    "critique": "Patient is post-withdrawal, ambulatory, and clinically stable. ASAM Level 2.1 IOP meets the standard of care for stabilization after acute withdrawal. The patient has not failed IOP in the past 90 days. Residential is not the least restrictive setting."
+  },
+  "expected_round_2": {
+    "pivot": "From clinical-only argument to clinical + federal parity violation",
+    "medical_necessity_revised": {
+      "claim": "'Least restrictive setting' is not the ASAM standard.",
+      "evidence": [
+        "ASAM Criteria 4th Edition: appropriate level matched to six-dimension assessment, not least restrictive",
+        "Patient's Dimension 5 and 6 scores indicate residential is the matched level",
+        "Applying 'least restrictive' standard contradicts ASAM, which Anthem's own policy references"
+      ]
+    },
+    "policy_citation_revised": {
+      "claim": "FEDERAL PARITY VIOLATION — applying 'least restrictive setting' criterion only to SUD residential while not applying it to medical/surgical residential is a Non-Quantitative Treatment Limitation (NQTL) disparity under MHPAEA.",
+      "evidence": [
+        "Anthem plan covers medical/surgical residential without 'least restrictive setting' precondition",
+        "29 CFR 2590.712(c)(4) — plan must demonstrate NQTL comparability between MH/SUD and medical/surgical benefits",
+        "Applying disparate admission criteria is prima facie evidence of NQTL violation",
+        "Burden of proof on the plan, not the patient"
+      ]
+    },
+    "precedent_revised": {
+      "claim": "Federal enforcement and case law support the parity argument.",
+      "evidence": [
+        "Wit v. UBH (9th Cir. 2023) established more-restrictive criteria as parity violations",
+        "DOL 2023-2024 MHPAEA enforcement reports cite 'least restrictive setting' as common NQTL violation",
+        "California DMHC parity enforcement supplements federal MHPAEA"
+      ]
+    }
+  },
+  "expected_insurer_defense_round_2": {
+    "critique": "MHPAEA NQTL analysis is the insurer's burden, not the patient's. Denial stands on medical necessity grounds independent of parity analysis."
+  },
+  "expected_round_2_final": {
+    "response": "Under 29 CFR 2590.712(c)(4), the plan must demonstrate that any NQTL applied to mental health/SUD benefits is comparable to and applied no more stringently than NQTLs applied to medical/surgical benefits. This patient's denial citing 'least restrictive setting' — a criterion absent from the plan's medical/surgical residential coverage — is prima facie evidence of NQTL disparity. The patient is not required to prove the violation; the plan must prove compliance. The denial therefore fails procedurally regardless of clinical analysis."
+  },
+  "expected_supervisor_verdict": "This appeal rests on both clinical and federal legal grounds. Clinically, the patient meets ASAM Level 3.5 residential criteria across Dimensions 3, 5, and 6. ASAM's standard is appropriate level of care, not 'least restrictive setting' — applying a least-restrictive framework conflicts with the published ASAM Criteria 4th Edition that Anthem references in its own policy. Legally, applying admission criteria to substance use residential care that are not applied to medical/surgical residential care is a Non-Quantitative Treatment Limitation under the Mental Health Parity and Addiction Equity Act. Under 29 CFR 2590.712, the plan bears the burden of demonstrating NQTL comparability. We request immediate authorization for 30 days of ASAM Level 3.5 residential treatment. If denied, this case will be escalated to the Department of Labor for MHPAEA enforcement review and to California DMHC for external IMR.",
+  "demo_narration_30s": "Anthem denied 30 days of residential SUD treatment for a patient post-withdrawal — said outpatient is enough. Our agents pull ASAM criteria — patient meets Level 3.5 across three dimensions. But the critic argues 'least restrictive setting.' Here's where it gets interesting. Our harness surfaces the Mental Health Parity Act — Anthem doesn't apply this restriction to medical residential care, only to addiction residential. That's a federal NQTL violation. The patient didn't know this. Most patients never do. The harness found a federal protection that shifts the burden of proof to the insurer. This is what we mean when we say a real appeal isn't a letter — it's an argument."
+}

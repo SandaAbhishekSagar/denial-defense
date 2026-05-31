@@ -1,0 +1,87 @@
+{
+  "case_id": "case_02_spinal_cord_stimulator",
+  "display_name": "Cigna — Spinal Cord Stimulator Trial",
+  "category": "musculoskeletal_medical_necessity",
+  "stage_priority": 2,
+  "source_provenance": "Fully synthetic. Pattern modeled on the most common musculoskeletal/medical necessity denial in the IMR dataset (Cigna Coverage Policy 0525 is real and publicly published).",
+  "denial_letter": {
+    "insurer": "Cigna Health Management, Inc.",
+    "date": "2026-04-08",
+    "procedure": "Spinal Cord Stimulator Trial — CPT 63650",
+    "denial_text": "This letter is to inform you that the requested service noted above has been determined to be not medically necessary based on our review of your clinical information.\n\nReason for determination: Conservative treatment options have not been exhausted prior to consideration of advanced interventional pain management. Per Cigna Medical Coverage Policy 0525 (Spinal Cord Stimulation), patient must demonstrate failure of at least three months of conservative therapy including physical therapy, pharmacologic management, and minimally invasive interventions before SCS is considered medically necessary.\n\nYou may request reconsideration of this decision within 180 days.",
+    "inferred_carc": ["CARC_50"],
+    "inferred_rarc": ["N115"]
+  },
+  "patient_context": {
+    "age": 58,
+    "gender": "Male",
+    "diagnosis_icd10": "M96.1",
+    "diagnosis_text": "Post-laminectomy syndrome (failed back surgery syndrome)",
+    "clinical_findings": [
+      "Chronic low back pain with radicular component, VAS 8/10 at rest",
+      "MRI: post-surgical changes, no candidacy for revision surgery per neurosurgical consult",
+      "Oswestry Disability Index: 62 (severe disability)",
+      "Unable to work since 2023"
+    ],
+    "failed_therapies": [
+      {"modality": "Physical therapy", "duration": "18 weeks (2022-2023)", "outcome": "no sustained improvement"},
+      {"drug": "oxycodone", "dose": "5mg titrated to 30mg/day", "duration": "2 years", "outcome": "inadequate relief, intolerable constipation"},
+      {"modality": "Lumbar epidural steroid injection", "frequency": "three rounds", "outcome": "<30% relief lasting <4 weeks each"},
+      {"drug": "gabapentin", "dose": "1800mg daily", "outcome": "intolerable somnolence"},
+      {"drug": "duloxetine", "dose": "60mg daily", "duration": "12 weeks", "outcome": "no benefit"},
+      {"modality": "Radiofrequency ablation", "date": "October 2025", "outcome": "<30% relief"}
+    ],
+    "treating_physician_specialty": "Pain Medicine, board-certified",
+    "psychological_evaluation": "Completed 2026-03-15, cleared for SCS candidacy, no contraindications"
+  },
+  "expected_round_1": {
+    "medical_necessity_output": {
+      "claim": "SCS is established standard of care for post-laminectomy syndrome after conservative therapy failure.",
+      "evidence": [
+        "NACC consensus guideline establishing SCS as standard for failed back surgery syndrome",
+        "Kapural et al. 2016 RCT — SCS superior to conventional medical management",
+        "Deer et al. 2020 best practice consensus for SCS patient selection"
+      ]
+    },
+    "policy_citation_output": {
+      "claim": "Patient meets all criteria in Cigna Coverage Policy 0525.",
+      "evidence": [
+        "Section II.A: Chronic pain >6 months — patient meets (4+ years)",
+        "Section II.B: Failed conservative therapy — documented across PT, opioids, ESIs, gabapentin, duloxetine, RFA",
+        "Section II.C: Not surgical candidate — neurosurgical consult confirms",
+        "Section II.D: Psychological evaluation completed — cleared 2026-03-15"
+      ]
+    },
+    "precedent_output": {
+      "claim": "California DMHC IMR cases support overturn when treatment timeline is comprehensive.",
+      "evidence": [
+        "Pattern: Cigna SCS denials based on 'conservative therapy not exhausted' overturned at ~58% in CA DMHC data",
+        "Reviewers consistently note: policy requires failure across modalities, not continuous failure in rolling window"
+      ]
+    }
+  },
+  "expected_insurer_defense_round_1": {
+    "weakest_claim_attacked": "policy_citation",
+    "critique": "Patient's submission documents multiple conservative therapies but does not establish a continuous failed-therapy window meeting policy criteria. The PT was completed in 2023; current acuity may have changed. Recommend denying pending updated 90-day conservative trial documentation."
+  },
+  "expected_round_2": {
+    "pivot": "From 'all therapies tried' to 'continuous documented failure across 4-year timeline'",
+    "policy_citation_revised": {
+      "claim": "Cigna Policy 0525 does not require continuous conservative therapy — it requires documented failure across modalities, which is established.",
+      "evidence": [
+        "2025-2026 continuous opioid management with documented dose escalation and side effects",
+        "October 2025 radiofrequency ablation attempt — <30% relief",
+        "Policy 0525 plain reading: 'documented failure of conservative therapy' — no continuity requirement specified",
+        "Psychological evaluation completed within authorization window (2026-03-15)"
+      ]
+    }
+  },
+  "expected_insurer_defense_round_2": {
+    "critique": "Trial period requirement under Section IV.C of Policy 0525 requires a temporary percutaneous SCS trial before permanent implant. Authorization sought is for permanent implant CPT 63685, not trial CPT 63650."
+  },
+  "expected_round_2_final": {
+    "response": "Confirms requested authorization is for trial (CPT 63650 as cited in original denial letter), not permanent implant. Cites the original denial letter's own CPT code reference as evidence of misreading by Insurer Defense."
+  },
+  "expected_supervisor_verdict": "The denial misapplies Cigna Coverage Policy 0525 in two respects. First, the policy requires documented failure of conservative therapy, not continuous failure within a rolling 90-day window — the patient has a four-year documented timeline including PT, three pharmacologic classes, three rounds of epidural injections, and most recently radiofrequency ablation. Second, the procedure requested is the percutaneous trial stimulator (CPT 63650), which the denial itself references, not the permanent implant (CPT 63685). The trial is the appropriate next diagnostic step under Section IV.B of the policy. Comparable cases at California DMHC have been overturned at the IMR level at rates exceeding 55%. We request reversal.",
+  "demo_narration_30s": "Spinal cord stimulator denial — Cigna says conservative therapy not exhausted. Our agents pull NACC guidelines, the exact Cigna policy, and find precedent overturns. The Insurer Defense agent attacks — says the patient's PT was too long ago. The harness pivots to show a four-year continuous treatment timeline. Then Insurer Defense attacks again — wrong CPT code. The harness catches that Cigna's own denial letter cites CPT 63650 — the trial code — so the request matches. Three rounds of attack survived. This is what 'sophisticated harness' actually means."
+}

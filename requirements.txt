@@ -1,0 +1,24 @@
+# Denial Defense - Data Collection Dependencies
+
+# Core scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# HTML to markdown extraction
+trafilatura>=1.6.0
+
+# Retry logic
+tenacity>=8.2.0
+
+# PDF handling
+pypdf>=3.17.0
+
+# Browser automation (for JS-heavy sites - optional)
+playwright>=1.40.0
+
+# Data processing
+pandas>=2.1.0
+
+# Progress tracking (optional)
+tqdm>=4.66.0

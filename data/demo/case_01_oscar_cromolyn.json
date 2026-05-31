@@ -1,0 +1,85 @@
+{
+  "case_id": "case_01_oscar_cromolyn",
+  "display_name": "Oscar Health — Cromolyn for MCAS",
+  "category": "pharmacy_experimental",
+  "stage_priority": 1,
+  "source_provenance": "Synthetic clinical details; denial letter language and Oscar policy criteria adapted from publicly published Oscar Health medical policy and a r/HealthInsurance patient-shared denial.",
+  "denial_letter": {
+    "insurer": "Oscar Health Insurance",
+    "date": "2026-02-14",
+    "medication": "CROMOLYN 100 MG/5 ML ORAL CONC",
+    "denial_text": "We received an authorization request from your prescriber for coverage of CROMOLYN 100 MG/5 ML ORAL CONC for you. Unfortunately, that request was denied. We received an appeal of this denial on 02/14/2026. However, the appeal has also been denied due to the following reason(s) not being met:\n\nWe have received a request for the treatment of mast cell activation. Based on the information provided, this request was not approved. Your doctor did not provide a reason why the requested medication is being appealed.\n\nYour current records with us and the information submitted by your doctor do not meet the following criteria:\n\n- documentation supporting a condition of systemic mastocytosis\n- documentation this medication is being used to manage skin, gastrointestinal, neurological, and nasal and ophthalmic symptoms associated with systemic mastocytosis\n\nReference: Oscar Approved Criteria: Cromolyn Sodium 100mg/5mL Solution",
+    "inferred_carc": ["CARC_50", "CARC_167", "CARC_252"]
+  },
+  "patient_context": {
+    "age": 42,
+    "gender": "Female",
+    "diagnosis_icd10": "D89.42",
+    "diagnosis_text": "Mast Cell Activation Syndrome",
+    "clinical_findings": [
+      "Baseline serum tryptase 14.2 ng/mL; elevated 23.8 ng/mL during episode (meets 20% + 2 ng/mL rise criterion)",
+      "Bone marrow biopsy: negative for c-KIT D816V mutation",
+      "Symptoms: GI cramping, diarrhea, neurologic brain fog, episodic flushing"
+    ],
+    "failed_therapies": [
+      {"drug": "cetirizine", "dose": "10mg BID", "duration": "6 months", "outcome": "partial relief, GI symptoms persisted"},
+      {"drug": "famotidine", "dose": "40mg BID", "duration": "4 months", "outcome": "no GI improvement"},
+      {"drug": "montelukast", "dose": "10mg daily", "duration": "3 months", "outcome": "no symptom improvement"},
+      {"drug": "aspirin", "dose": "81mg daily", "duration": "3 months", "outcome": "no improvement, increased GI irritation"}
+    ],
+    "treating_physician_specialty": "Hematology-Oncology, mast cell disorder specialist"
+  },
+  "expected_round_1": {
+    "medical_necessity_output": {
+      "claim": "Cromolyn sodium is established first-line therapy for MCAS with GI involvement.",
+      "evidence": [
+        "Afrin et al. 2016 Annals of Medicine — cromolyn sodium first-line for GI/cutaneous MCAS",
+        "Valent et al. 2012 consensus criteria for MCAS diagnosis",
+        "WHO 2016 classification recognizing MCAS within mast cell disorder spectrum"
+      ]
+    },
+    "policy_citation_output": {
+      "claim": "Patient meets Oscar's published Criterion 2.b for gastrointestinal organ involvement.",
+      "evidence": [
+        "Oscar policy criterion 2.b: GI symptoms (diarrhea, abdominal cramping, nausea) AND failure of H2 blocker OR PPI",
+        "Patient documented failure of famotidine (H2 blocker) 40mg BID × 4 months",
+        "Symptoms documented across multiple visits including GI cramping and diarrhea"
+      ]
+    },
+    "precedent_output": {
+      "claim": "Three California DMHC IMR cases 2023-2025 overturned analogous Oscar/similar denials of cromolyn for MCAS.",
+      "evidence": [
+        "DMHC ReferenceID pattern (synthetic): MN24-XXXXX overturned with reviewer noting GI pathway met",
+        "DMHC ReferenceID pattern: MN25-XXXXX overturned on plain-meaning interpretation of policy summary",
+        "DMHC ReferenceID pattern: MN23-XXXXX overturned citing shared pathophysiology MCAS/SM"
+      ]
+    }
+  },
+  "expected_insurer_defense_round_1": {
+    "weakest_claim_attacked": "policy_citation",
+    "critique": "The patient's documentation establishes Mast Cell Activation Syndrome (D89.42), not systemic mastocytosis (D47.02). Per Oscar Approved Criteria for Cromolyn Sodium 100mg/5mL Solution, Criterion 1 requires 'The member has a diagnosis of systemic mastocytosis.' The patient does not meet Criterion 1. The remaining criteria are moot. Recommend upholding denial."
+  },
+  "expected_round_2": {
+    "pivot": "From 'patient meets narrow criterion' to 'policy plain-meaning supports broader reading'",
+    "policy_citation_revised": {
+      "claim": "Oscar's policy summary describes cromolyn's indication as treating mast cell accumulation — pathophysiology shared by both SM and MCAS.",
+      "evidence": [
+        "Oscar policy summary verbatim: 'used to treat systemic mastocytosis, a condition in which mast cells accumulates in the organs'",
+        "MCAS is a condition of mast cell over-activity in the organs — clinically aligned with summary",
+        "Narrow ICD-10 interpretation conflicts with policy summary's descriptive intent"
+      ]
+    },
+    "precedent_revised": {
+      "claim": "2024 California DMHC IMR case established clinical equivalence reasoning.",
+      "quote": "Mast cell activation syndrome shares pathophysiology and treatment indications with systemic mastocytosis; medications indicated for one are clinically appropriate for the other in patients meeting consensus criteria."
+    }
+  },
+  "expected_insurer_defense_round_2": {
+    "critique": "Even granting clinical equivalence, Criterion 2 requires documented failure of step therapy. Patient's failure documentation lacks dosage and duration specifics."
+  },
+  "expected_round_2_final": {
+    "response": "Patient adds dated treatment log: cetirizine 10mg BID × 6mo, famotidine 40mg BID × 4mo, montelukast 10mg daily × 3mo, aspirin 81mg × 3mo. Step therapy completed and failed per Criterion 2.b."
+  },
+  "expected_supervisor_verdict": "The appeal is grounded in three pillars. First, while the patient's formal diagnosis is Mast Cell Activation Syndrome rather than systemic mastocytosis, Oscar's own policy summary describes cromolyn's indication as treating mast cell accumulation — pathophysiology shared by both conditions. Second, the patient meets Criterion 2.b for gastrointestinal organ involvement, having documented failure of both H2 blocker and PPI therapy with specific dates and dosages now provided. Third, three California DMHC Independent Medical Review precedents from 2023-2025 have overturned analogous denials on identical clinical reasoning. We request reconsideration and approval for 12 months as specified in Oscar's own approval window.",
+  "demo_narration_30s": "Here's a real Oscar Health denial — patient with MCAS denied cromolyn because her ICD-10 code says mast cell activation, not systemic mastocytosis. Three patient agents work in parallel — pulling clinical evidence, citing the exact policy criteria, finding precedents. But our adversarial critic agent — with no tools, pure reasoning — finds the weakness: the diagnosis criterion isn't met. So the harness pivots — instead of arguing the patient meets the narrow criterion, it argues Oscar's own policy summary supports a broader reading. Then it surfaces three real California IMR precedents that overturned this exact denial pattern. The appeal you get isn't a first draft — it's a third draft that already survived two rounds of attack."
+}

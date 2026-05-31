@@ -1,0 +1,24 @@
+Field,Value
+Title,"Independent Medical Review (IMR) Determinations, Trend"
+URL,independent-medical-review-imr-determinations-trend
+Description,"This data is from the California Department of Managed Health Care (DMHC). It contains all decisions from Independent Medical Reviews (IMR) administered by the DMHC since January 1, 2001. An IMR is an independent review of a denied, delayed, or modified health care service that the health plan has determined to be not medically necessary, experimental/investigational or non-emergent/urgent. If the IMR is decided in an enrollees favor, the health plan must authorize the service or treatment requested."
+Tags,"dmhc,hmo help center,imr,independent medical review"
+Department,Department of Managed Health Care
+Contact Email,OpenData@dmhc.ca.gov
+Program,"Department of Managed Health Care, Help Center, Consumer Complaint Division"
+Homepage URL,https://www.dmhc.ca.gov/AbouttheDMHC.aspx#help
+Temporal Coverage,2001 - Current
+Spatial/Geographic Coverage,Statewide
+Geographic Granularity,Statewide
+Language,English (EN)
+Frequency,Other
+De-Identification Method,
+Source Link,https://www.dmhc.ca.gov/FileaComplaint/IndependentMedicalReviewandComplaintReports.aspx
+Data Collection Tool,http://wpso.dmhc.ca.gov/imr/
+License,See Terms of Use
+Limitations,Use of this data is subject to the CHHS Terms of Use and any copyright and proprietary notices incorporated in or accompanying the individual files.
+Additional Limitations,
+Additional Information,
+Related Resources,
+Secondary Sources,
+Citation,"DMHC IMR Data, 2001 - Current"

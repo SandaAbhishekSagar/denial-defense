@@ -1,0 +1,50 @@
+{
+  "total_cases": 42749,
+  "year_min": 2001,
+  "year_max": 2026,
+  "determination_counts": {
+    "Overturned Decision of Health Plan": 22445,
+    "Upheld Decision of Health Plan": 20304
+  },
+  "type_counts": {
+    "Medical Necessity": 31504,
+    "Experimental/Investigational": 10476,
+    "Urgent Care": 769
+  },
+  "top_15_diagnosis_categories": {
+    "Orth/Musculoskeletal": 7337,
+    "Mental Disorder": 6120,
+    "Cancer": 3709,
+    "Endocrine/Metabolic": 3342,
+    "CNS/ Neuromusc Dis": 3304,
+    "Cardiac/Circ Problem": 2158,
+    "Digestive System/ GI": 1857,
+    "Infectious Disease": 1795,
+    "Autism Spectrum": 1390,
+    "Skin Disorders": 1311,
+    "OB-GYN/ Pregnancy": 1080,
+    "Pediatrics": 1061,
+    "GU/ Kidney Disorder": 993,
+    "Immuno Disorders": 960,
+    "Morbid Obesity": 948
+  },
+  "top_15_treatment_categories": {
+    "Pharmacy": 11948,
+    "Diag Imag & Screen": 5994,
+    "Mental Health": 4835,
+    "DME": 2679,
+    "Pain Management": 1827,
+    "Orthopedic Proc": 1676,
+    "Cancer Care": 1625,
+    "Gen Surg Proc": 1453,
+    "Rehab/ Svc - Outpt": 1384,
+    "Reconstr/Plast Proc": 1310,
+    "Elect/Therm/Radfreq": 1115,
+    "Autism Related Tx": 1040,
+    "Diag/ MD Eval": 776,
+    "Emergency/Urg Care": 620,
+    "Rehab/Svcs SNF Inpt": 521
+  },
+  "eval_set_size": 162,
+  "eval_set_overturn_rate": 0.5370370370370371
+}

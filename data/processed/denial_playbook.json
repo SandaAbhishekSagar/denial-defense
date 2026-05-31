@@ -1,0 +1,397 @@
+{
+  "schema_version": "0.1",
+  "last_updated": "2026-05-31",
+  "purpose": "Reference playbook for the Insurer Defense agent and Patient-side agents in the Denial Defense multi-agent system. Maps the most-appealable CARC denial codes to the insurer reasoning patterns, patient counter-arguments, and weak spots that drive successful appeals.",
+  "usage": {
+    "insurer_defense_agent": "On round 1, identify the CARC code(s) in the user's denial letter. Load the matching entries. Use 'typical_insurer_arguments' and the 'category' to construct the strongest adversarial critique of the patient's draft appeal. On round 2, attack the weakest counter the patient deployed.",
+    "patient_agents": "Use 'common_patient_counters', 'weak_spots_for_insurer', and 'typical_evidence_needed' to construct rebuttal arguments. Cite specific policy language wherever possible — generic appeals fail.",
+    "supervisor": "Use 'appealability' to set expectations on the synthesized verdict — a CARC 50 medical necessity denial with strong evidence has very different odds than a CARC 119 benefit max."
+  },
+  "data_sources": [
+    "X12.org CARC code list (https://x12.org/codes/claim-adjustment-reason-codes)",
+    "X12.org RARC code list (https://x12.org/codes/remittance-advice-remark-codes)",
+    "CMS Medicare Claims Processing Manual chapters on appeals",
+    "CA DMHC Independent Medical Review dataset 2001-2026 (analyzed Findings field across 42,750 cases)",
+    "Domain expertise from EDI 837 claims adjudication"
+  ],
+  "appealability_scale": {
+    "high": "Successful appeals are common (>40%) when evidence is well-prepared. Most worth the patient's effort.",
+    "medium": "Appeals succeed (15-40%) but require specific evidence. Patient must be diligent.",
+    "low": "Appeals rarely succeed (<15%) without unusual circumstances. Set expectations honestly."
+  },
+  "codes": {
+    "CARC_50": {
+      "code": "50",
+      "category": "medical_necessity",
+      "plain_english": "These are non-covered services because this is not deemed a 'medical necessity' by the payer.",
+      "appealability": "high",
+      "frequency_in_imr_data": "very_common — this is the single most-appealed code in the CA DMHC dataset, especially the Medical Necessity IMR Type",
+      "common_paired_rarc": ["N115 (decision based on local coverage determination)", "M127 (medical record does not support)", "M62 (information unavailable to make decision)"],
+      "typical_insurer_arguments": [
+        "Patient does not meet [specific criteria] in medical policy [policy number]",
+        "Conservative or first-line treatment has not been tried and failed (step therapy)",
+        "Clinical evidence does not support the requested intervention for this patient's specific presentation",
+        "Documented diagnosis does not match the indications listed in the coverage policy",
+        "Requested service can be provided at a lower level of care",
+        "Patient's clinical picture is stable; intervention is not urgent"
+      ],
+      "common_patient_counters": [
+        "Cite the exact policy criteria and demonstrate item-by-item how the patient meets each one",
+        "Document conservative treatment failure with dates, dosages, and clinical outcomes",
+        "Submit peer-reviewed evidence (PubMed) supporting the intervention for the specific indication",
+        "Include a Letter of Medical Necessity from the treating physician with clinical reasoning",
+        "Reference comorbidity or exception clauses that apply to this patient",
+        "If denied at a higher level of care, document why lower levels are inappropriate (failed prior attempts, clinical risk)"
+      ],
+      "weak_spots_for_insurer": [
+        "Policy language is often ambiguous; argue plain-meaning interpretation favorable to the patient",
+        "When multiple criteria are listed with 'any of the following,' meeting only ONE is sufficient",
+        "Comorbidity exception clauses are commonly buried in section subheadings and ignored by reviewers",
+        "Policy citations must match the policy version in effect on the date of service — insurers sometimes apply newer/older versions incorrectly",
+        "If the denial cites a Medicare LCD/NCD, check whether the patient's plan is actually subject to it (commercial plans often have separate criteria)"
+      ],
+      "typical_evidence_needed": [
+        "Treating physician's Letter of Medical Necessity (signed, on letterhead)",
+        "Clinical chart notes covering the relevant treatment history",
+        "1-3 peer-reviewed citations supporting the indication",
+        "The exact medical policy PDF in effect at the date of service",
+        "Documentation of failed alternatives if step therapy is at issue"
+      ],
+      "imr_overturn_rate_observed": "Approximately 50-60% of Medical Necessity IMR cases in CA DMHC data are overturned when well-documented"
+    },
+    "CARC_197": {
+      "code": "197",
+      "category": "prior_authorization",
+      "plain_english": "Precertification, authorization, notification, or pre-treatment requirement absent.",
+      "appealability": "medium-high",
+      "frequency_in_imr_data": "common — often paired with retroactive authorization disputes",
+      "common_paired_rarc": ["N210 (alert: you may appeal this decision)", "N640 (alert: prior auth on file does not match service rendered)"],
+      "typical_insurer_arguments": [
+        "Patient or provider failed to obtain prior authorization before the service was rendered",
+        "Authorization was obtained but for a different CPT/HCPCS code than the one billed",
+        "Authorization expired before the date of service",
+        "Service was provided outside the scope of what was authorized (e.g., different facility, different provider)",
+        "Notification timeline was missed (inpatient admissions typically have 24-48 hour notification rules)"
+      ],
+      "common_patient_counters": [
+        "If the service was emergent or urgent, argue that prior auth requirements do not apply (cite the No Surprises Act for emergency services)",
+        "Document that prior auth WAS obtained — include authorization number, date, and contact log",
+        "If auth was for a different code, argue medical equivalence and request retroactive auth",
+        "Argue that the provider's office submitted the request and any failure is administrative, not the patient's fault",
+        "Cite state-specific retroactive authorization rules (many states require insurers to grant retro auth in certain circumstances)"
+      ],
+      "weak_spots_for_insurer": [
+        "Many states have retroactive authorization requirements that insurers routinely overlook",
+        "Emergency and urgent care services are exempt from prior auth in most plans — check the plan document",
+        "If the patient was not informed of the auth requirement, ERISA notice requirements may apply",
+        "If the auth request was submitted but the insurer failed to respond within their stated timeline, the request is often deemed approved"
+      ],
+      "typical_evidence_needed": [
+        "Phone log or fax confirmation showing auth was requested",
+        "Auth number if obtained (even for a different code)",
+        "Provider's office documentation of the auth submission",
+        "Plan document language on emergency/urgent exemptions",
+        "State insurance regulations on retroactive authorization"
+      ],
+      "imr_overturn_rate_observed": "Variable — depends heavily on whether the patient can show good-faith effort to obtain auth"
+    },
+    "CARC_96_N130_experimental": {
+      "code": "96",
+      "rarc_specifier": "N130 (consult plan benefit documents/guidelines for information about restrictions for this service)",
+      "category": "experimental_investigational",
+      "plain_english": "Non-covered charge(s) — specifically when the insurer classifies the treatment as experimental or investigational.",
+      "appealability": "medium",
+      "frequency_in_imr_data": "common — this is the Experimental/Investigational IMR Type in the CA DMHC data",
+      "common_paired_rarc": ["N130", "M62", "M77 (missing/incomplete/invalid placement of service)"],
+      "typical_insurer_arguments": [
+        "The treatment is considered experimental or investigational for this patient's condition",
+        "FDA approval does not exist for this specific indication (off-label use)",
+        "Insufficient peer-reviewed evidence of safety and efficacy for the patient population",
+        "Treatment is not the standard of care per accepted clinical guidelines",
+        "Clinical trial data is preliminary or limited to small studies"
+      ],
+      "common_patient_counters": [
+        "Cite recent peer-reviewed studies (within 3-5 years) supporting safety and efficacy",
+        "Reference specialty society guidelines that endorse the treatment (ASMBS, WPATH, ASAM, NCCN, etc.)",
+        "If FDA-approved for a related indication, argue therapeutic equivalence",
+        "Document that no covered standard treatment exists or that standards have failed for this patient",
+        "Cite other insurers that cover the treatment (sets precedent the policy is out of step)",
+        "Reference the specific patient's clinical factors that make this treatment indicated"
+      ],
+      "weak_spots_for_insurer": [
+        "'Experimental' classifications often lag clinical practice by 5-10 years",
+        "If specialty societies endorse the treatment as standard, the experimental label is rebuttable",
+        "Off-label use is legal and frequently medically indicated — insurers cannot deny purely on FDA labeling for many drug classes",
+        "External review reviewers (IMR) overturn at meaningful rates when treatment has emerging evidence base"
+      ],
+      "typical_evidence_needed": [
+        "3-5 peer-reviewed studies, ideally including at least one RCT or systematic review",
+        "Specialty society guideline or position statement",
+        "Documentation of failed standard treatments",
+        "Letter from a specialist who has experience with the treatment"
+      ],
+      "imr_overturn_rate_observed": "Approximately 30-45% in CA DMHC Experimental/Investigational IMR cases — lower than Medical Necessity but still substantial"
+    },
+    "CARC_167": {
+      "code": "167",
+      "category": "diagnosis_coverage",
+      "plain_english": "This (these) diagnosis(es) is (are) not covered.",
+      "appealability": "high",
+      "frequency_in_imr_data": "moderate — often a coding/documentation issue rather than a true coverage dispute",
+      "common_paired_rarc": ["M76 (missing/incomplete diagnosis)", "N115"],
+      "typical_insurer_arguments": [
+        "The submitted diagnosis code does not match a covered indication for this procedure",
+        "ICD-10 code is too non-specific to establish medical necessity",
+        "Diagnosis is excluded from coverage per the patient's specific plan (e.g., cosmetic exclusions, infertility exclusions in some plans)",
+        "The diagnosis-to-procedure linkage required by the policy is not documented"
+      ],
+      "common_patient_counters": [
+        "Provide additional clinical documentation supporting a more specific or appropriate ICD-10 code",
+        "Ask the provider to resubmit with a corrected or additional diagnosis code",
+        "Cite the policy language showing the diagnosis IS covered for the procedure",
+        "If the exclusion is plan-specific, verify the patient's plan version and effective date",
+        "Argue that the diagnosis falls within the covered category (e.g., medically necessary vs cosmetic)"
+      ],
+      "weak_spots_for_insurer": [
+        "Coding errors are common and often resolved by the provider resubmitting with a more specific code",
+        "ICD-10 hierarchy means parent codes often imply child codes — the policy may cover the parent",
+        "Insurer's diagnosis-procedure crosswalks are sometimes outdated relative to current coding guidelines",
+        "Cosmetic/medical distinction is contested for many procedures (e.g., gender-affirming care, reconstructive surgery)"
+      ],
+      "typical_evidence_needed": [
+        "Updated provider documentation with specific diagnosis",
+        "ICD-10 code reference showing appropriate linkage",
+        "Plan document showing the diagnosis category is covered",
+        "Specialty society statement on the medical (not cosmetic) nature of the indication"
+      ],
+      "imr_overturn_rate_observed": "Often resolved at internal appeal before reaching IMR; high reversal when coding correction is possible"
+    },
+    "CARC_252": {
+      "code": "252",
+      "category": "documentation",
+      "plain_english": "An attachment/other documentation is required to adjudicate this claim/service.",
+      "appealability": "very_high",
+      "frequency_in_imr_data": "moderate — most resolved before external review",
+      "common_paired_rarc": ["M127", "N706 (missing documentation)", "MA130 (claim contains incomplete and/or invalid information)"],
+      "typical_insurer_arguments": [
+        "Required clinical documentation was not submitted with the claim",
+        "Operative report, pathology report, or treatment plan is missing",
+        "Documentation does not support the level of service billed",
+        "Required attachments (e.g., medical necessity letter, imaging reports) are absent"
+      ],
+      "common_patient_counters": [
+        "Simply submit the missing documentation — this is the most easily resolved category",
+        "Request itemized list of what's missing from the insurer",
+        "Have the provider submit a corrected claim with all required attachments",
+        "Document the timeline to ensure submission within the appeal window"
+      ],
+      "weak_spots_for_insurer": [
+        "Insurers must specify what's missing — vague 'needs more info' denials are appealable on procedural grounds",
+        "Once requested documentation is submitted, the clock restarts and the denial reason effectively disappears",
+        "If documentation was previously submitted and the insurer lost it, that's the insurer's error"
+      ],
+      "typical_evidence_needed": [
+        "Whatever specific document the insurer requested",
+        "Cover letter listing all documents being resubmitted",
+        "Proof of timely original submission if applicable"
+      ],
+      "imr_overturn_rate_observed": "Very high once documentation is provided; rarely reaches external review"
+    },
+    "CARC_16": {
+      "code": "16",
+      "category": "documentation",
+      "plain_english": "Claim/service lacks information or has submission/billing error(s).",
+      "appealability": "very_high",
+      "frequency_in_imr_data": "low — typically administrative, not appealed externally",
+      "common_paired_rarc": ["M76", "M77", "MA13 (claim/service requires additional information)", "N382 (missing/incomplete/invalid patient identifier)"],
+      "typical_insurer_arguments": [
+        "Claim submission is missing required fields (NPI, modifier, place of service)",
+        "Patient identifier does not match the enrollment record",
+        "Coding is internally inconsistent (e.g., procedure code does not match place of service)",
+        "Date of service is missing or invalid"
+      ],
+      "common_patient_counters": [
+        "Coordinate with the provider's billing office to resubmit the corrected claim",
+        "Request the specific field that's deficient",
+        "Verify the patient's enrollment status was active on the date of service",
+        "Almost always resolved without a clinical appeal — this is an administrative fix"
+      ],
+      "weak_spots_for_insurer": [
+        "The insurer must specify which field is deficient — generic CARC 16 denials are procedurally weak",
+        "If the missing information is something the insurer already has, the denial is improper",
+        "Resubmission with the correction usually voids the original denial"
+      ],
+      "typical_evidence_needed": [
+        "Corrected claim from the provider",
+        "Documentation of patient enrollment on date of service"
+      ],
+      "imr_overturn_rate_observed": "Almost always resolved at the claim resubmission level"
+    },
+    "CARC_204": {
+      "code": "204",
+      "category": "coverage_scope",
+      "plain_english": "This service/equipment/drug is not covered under the patient's current benefit plan.",
+      "appealability": "low-medium",
+      "frequency_in_imr_data": "moderate — appealability depends entirely on whether the exclusion is firm or arguable",
+      "common_paired_rarc": ["N130", "M127", "M62"],
+      "typical_insurer_arguments": [
+        "The specific service is excluded from the patient's plan (e.g., 'cosmetic procedures,' 'infertility services,' 'adult dental,' 'experimental treatments')",
+        "Plan does not include the relevant benefit category at all",
+        "Service falls outside the geographic scope or network of the plan",
+        "Patient has not met preconditions for the benefit (e.g., waiting period)"
+      ],
+      "common_patient_counters": [
+        "Argue the service falls into a covered category rather than an excluded one (e.g., reconstructive vs cosmetic)",
+        "Cite federal mandates (ACA Essential Health Benefits, mental health parity, No Surprises Act) that override plan exclusions",
+        "Reference state-mandated benefits that apply to fully-insured plans",
+        "If the exclusion language is ambiguous, argue plain-meaning interpretation",
+        "For self-insured ERISA plans, check whether the Summary Plan Description actually contains the cited exclusion"
+      ],
+      "weak_spots_for_insurer": [
+        "Plan exclusions are not unlimited — they must comply with federal law (ACA, MHPAEA, NSA, ADA)",
+        "Mental health parity violations are common — services restricted only in MH/SUD are often illegal",
+        "State-mandated benefits override plan exclusions for fully-insured plans (not self-insured ERISA plans)",
+        "Exclusion language is often vague enough to permit category arguments (cosmetic vs reconstructive is a frequent battleground)"
+      ],
+      "typical_evidence_needed": [
+        "Patient's actual plan document or Summary Plan Description",
+        "Federal law citations (ACA EHB, MHPAEA, NSA, Section 1557)",
+        "State insurance code citations if applicable",
+        "Medical documentation establishing the service is medically necessary (not the excluded category)"
+      ],
+      "imr_overturn_rate_observed": "Lower than medical necessity overall; higher when federal mandate or category dispute is at issue"
+    },
+    "CARC_119": {
+      "code": "119",
+      "category": "benefit_limit",
+      "plain_english": "Benefit maximum for this time period or occurrence has been reached.",
+      "appealability": "low",
+      "frequency_in_imr_data": "low — hard limits are rarely overturned at IMR",
+      "common_paired_rarc": ["N362 (number of days or units of service exceeds acceptable maximum)"],
+      "typical_insurer_arguments": [
+        "Patient has reached the annual/lifetime visit limit for this benefit category",
+        "Allowed units (PT visits, mental health visits, days of inpatient care) have been exhausted",
+        "Dollar maximum on a specific benefit category has been reached"
+      ],
+      "common_patient_counters": [
+        "Argue the cap violates mental health parity (MHPAEA) if it applies only to behavioral health",
+        "Cite the No Surprises Act if the limit is being applied to emergency services",
+        "Request a benefit extension on medical necessity grounds (some plans allow this)",
+        "If the cap is being applied incorrectly (counting visits that weren't actually used), document the actual utilization",
+        "ACA prohibits lifetime and annual dollar limits on essential health benefits — verify this isn't being violated"
+      ],
+      "weak_spots_for_insurer": [
+        "Mental health visit caps are illegal if no equivalent medical/surgical cap exists (MHPAEA)",
+        "ACA prohibits annual and lifetime dollar limits on EHBs",
+        "If the cap counts denied/disputed visits, those should be excluded",
+        "Some plans allow medical necessity extensions but don't inform patients"
+      ],
+      "typical_evidence_needed": [
+        "Plan document showing the actual benefit limit language",
+        "Utilization record showing what was actually used vs counted",
+        "Federal law citation if parity or ACA limits are at issue"
+      ],
+      "imr_overturn_rate_observed": "Low unless a federal parity or ACA violation is involved"
+    },
+    "CARC_242": {
+      "code": "242",
+      "category": "network",
+      "plain_english": "Services not provided by network/primary care providers.",
+      "appealability": "high (when NSA applies)",
+      "frequency_in_imr_data": "moderate — often resolved via No Surprises Act protections",
+      "common_paired_rarc": ["N418 (misrouted claim)", "N448 (this drug/service/supply is not included in the fee schedule)"],
+      "typical_insurer_arguments": [
+        "Provider is out-of-network and patient did not have an in-network referral",
+        "Service should have been provided by an in-network alternative",
+        "Patient chose to use an out-of-network provider despite available in-network options",
+        "Reimbursement is at the OON benefit level, not in-network"
+      ],
+      "common_patient_counters": [
+        "Cite the No Surprises Act (NSA) — emergency services, OON facility-based providers at in-network facilities, and air ambulance are protected",
+        "Argue network inadequacy — if no in-network provider was available within the required time/distance, OON services must be covered at in-network rates",
+        "Document that the patient was not given notice the provider was OON (NSA requires advance notice and consent)",
+        "Cite continuity of care provisions if the patient was already in active treatment when the provider went OON",
+        "Reference state-specific network adequacy rules"
+      ],
+      "weak_spots_for_insurer": [
+        "No Surprises Act (effective 2022) substantially limits OON balance billing — many denials predate or ignore NSA protections",
+        "Network adequacy violations are increasingly enforced by state regulators",
+        "If the patient received care at an in-network facility, ALL providers there are protected under NSA regardless of their individual network status",
+        "Insurers must provide accurate provider directories — directory errors that led patients to OON providers shift liability"
+      ],
+      "typical_evidence_needed": [
+        "Documentation that the service was emergent, at an in-network facility, or otherwise NSA-protected",
+        "Provider directory printout showing the provider was listed as in-network (if applicable)",
+        "Timeline showing in-network alternatives were not available or appropriate",
+        "Plan document on network adequacy and continuity of care provisions"
+      ],
+      "imr_overturn_rate_observed": "High when NSA protections apply; moderate otherwise"
+    },
+    "CARC_B7": {
+      "code": "B7",
+      "category": "provider_eligibility",
+      "plain_english": "This provider was not certified/eligible to be paid for this procedure/service on this date of service.",
+      "appealability": "medium",
+      "frequency_in_imr_data": "low — often resolved via credentialing fix rather than IMR",
+      "common_paired_rarc": ["N570 (missing/incomplete/invalid credentialing data)", "MA112 (missing/incomplete/invalid group practice information)"],
+      "typical_insurer_arguments": [
+        "Provider was not credentialed with the plan on the date of service",
+        "Provider's specialty does not match the service rendered",
+        "Provider's license was inactive, suspended, or restricted on the date of service",
+        "Provider has not enrolled in the network for this benefit category"
+      ],
+      "common_patient_counters": [
+        "Document that the patient reasonably believed the provider was in-network (provider directory, prior visits, etc.)",
+        "If provider credentialing was in process, argue the service should be covered retroactively upon completion",
+        "Cite continuity of care if the patient was already in treatment",
+        "Argue the patient cannot be held responsible for the provider's credentialing status",
+        "Request the provider be credentialed retroactively if eligible"
+      ],
+      "weak_spots_for_insurer": [
+        "Patients cannot verify credentialing status in real-time and should not bear the cost of insurer-side credentialing gaps",
+        "Provider directory accuracy laws place the burden on the insurer to keep listings current",
+        "If the provider has been credentialed before and after the date of service, gaps are often administrative",
+        "Continuity of care protections apply when patients are actively in treatment"
+      ],
+      "typical_evidence_needed": [
+        "Provider directory screenshot showing the provider was listed",
+        "Prior EOBs showing the provider was paid by the same insurer for similar services",
+        "Documentation of the patient's good-faith belief in network status",
+        "Continuity of care documentation if applicable"
+      ],
+      "imr_overturn_rate_observed": "Variable — depends on whether the credentialing issue is a real gap or an administrative artifact"
+    }
+  },
+  "cross_cutting_protections": {
+    "no_surprises_act": {
+      "applies_to": ["emergency services", "OON providers at in-network facilities", "air ambulance"],
+      "key_argument": "Patients cannot be balance-billed for protected services. Insurer must pay at in-network rates.",
+      "citation": "Public Law 116-260, Division BB"
+    },
+    "mental_health_parity_addiction_equity_act": {
+      "applies_to": ["any restriction on MH/SUD benefits that is more restrictive than medical/surgical benefits"],
+      "key_argument": "Parity violations include quantitative limits (visit caps), prior auth burdens, and network adequacy disparities. Insurers must justify any differences.",
+      "citation": "MHPAEA (2008) + ACA enforcement provisions"
+    },
+    "aca_essential_health_benefits": {
+      "applies_to": ["10 EHB categories including ambulatory, emergency, hospitalization, MH/SUD, prescription drugs, rehabilitative, lab, preventive, pediatric"],
+      "key_argument": "Annual and lifetime dollar limits on EHBs are prohibited. Plans must cover EHBs in non-grandfathered individual and small group markets.",
+      "citation": "ACA Section 1302"
+    },
+    "section_1557_nondiscrimination": {
+      "applies_to": ["any plan receiving federal financial assistance"],
+      "key_argument": "Prohibits discrimination on the basis of race, color, national origin, sex (including gender identity and pregnancy), age, or disability. Frequently cited in gender-affirming care appeals.",
+      "citation": "ACA Section 1557"
+    },
+    "erisa_full_and_fair_review": {
+      "applies_to": ["employer-sponsored group health plans"],
+      "key_argument": "Denial notice must include the specific reasons, plan provisions cited, and a description of any additional material needed. Vague denials are appealable on procedural grounds alone.",
+      "citation": "29 CFR 2560.503-1"
+    }
+  },
+  "synthesis_notes_for_agents": {
+    "ranking_arguments": "When multiple counter-arguments are available, prioritize: (1) federal law citations, (2) policy-specific exception clauses, (3) medical evidence, (4) procedural deficiencies in the denial itself, (5) general medical necessity arguments.",
+    "tone_guidance": "Appeal letters should be firm, specific, and clinical. Avoid emotional language. Cite exact policy language. Reference dates, codes, and specific clinical findings. Avoid making legal threats; instead reference the law dispassionately.",
+    "structural_template": "1. Identify the patient, plan, claim, and date of service. 2. Acknowledge the denial reason cited. 3. State the basis for appeal in one sentence. 4. Present evidence point-by-point matching the cited policy. 5. Request specific action (overturn, retro auth, payment at specific rate). 6. Note appeal rights including external review."
+  }
+}
