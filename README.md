@@ -2,6 +2,10 @@
 
 An open-source healthcare AI research project that helps patients draft insurance appeal letters using a multi-agent system.
 
+> **Note**: The CA DMHC IMR dataset (81MB CSV) is not included in this repository due to GitHub file size limits. 
+> Download it from: https://data.chhs.ca.gov/dataset/independent-medical-review-imr-determinations-trend
+> Place it in: `data/raw/imr/independent-medical-review-imr-determinations-trend.csv`
+
 ## Overview
 
 Denial Defense is a non-commercial research project (MIT License) that aims to empower patients facing health insurance denials by providing AI-assisted appeal letter drafting. The system analyzes denial letters, medical policies, and successful appeal examples to help craft effective appeals.
