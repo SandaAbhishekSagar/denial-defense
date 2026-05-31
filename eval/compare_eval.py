@@ -1,8 +1,8 @@
 """
 Weave evaluation: compare baseline single-agent vs multi-agent harness.
 
-Runs both systems on 15 sampled IMR cases and compares performance using
-an adversarial "survives attack" scorer.
+Runs both systems on sampled IMR cases and compares performance using
+4 scorers (W&B Inference gpt-oss-120b) while agents stay on OpenAI gpt-4o.
 
 Results appear in the Weave dashboard Evals tab for side-by-side comparison.
 """
@@ -18,6 +18,10 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Limit parallelism to avoid W&B Inference rate limits (default is 20).
+# Must be set BEFORE weave.init() — Weave reads it at startup.
+os.environ.setdefault("WEAVE_PARALLELISM", "20")
+
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -32,8 +36,20 @@ from agents.harness import run_harness
 assert os.getenv("OPENAI_API_KEY"), "OPENAI_API_KEY required"
 assert os.getenv("WANDB_API_KEY"), "WANDB_API_KEY required"
 
-# Initialize
+# Initialize — OpenAI for baseline/harness agents (DO NOT CHANGE)
 client = OpenAI()
+
+# W&B Inference for scorers only
+wandb_scorer_client = OpenAI(
+    base_url="https://api.inference.wandb.ai/v1",
+    api_key=os.getenv("WANDB_API_KEY"),
+    default_headers={
+        "OpenAI-Project": "sabhisheksagar200-northeastern-university/denial-defense"
+    },
+)
+
+SCORER_MODEL = "openai/gpt-oss-120b"
+
 weave.init("denial-defense")
 
 
@@ -79,11 +95,12 @@ def survives_attack_scorer(output: str, denial_synopsis: str) -> dict:
         }
     
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
+        response = wandb_scorer_client.chat.completions.create(
+            model=SCORER_MODEL,
             response_format={"type": "json_object"},
-            max_tokens=400,
+            max_tokens=800,
             temperature=0.3,
+            timeout=60,
             messages=[
                 {
                     "role": "system",
@@ -115,7 +132,10 @@ Weak appeals have:
             ]
         )
         
-        result = json.loads(response.choices[0].message.content)
+        raw = response.choices[0].message.content
+        if raw is None:
+            raise ValueError("W&B Inference returned None content")
+        result = json.loads(raw)
         
         # Weave scorers should return a dict with a "score" key
         return {
@@ -124,7 +144,15 @@ Weak appeals have:
             "reasoning": result.get("reasoning", ""),
             "score": 1.0 if result.get("survives", False) else 0.0
         }
-        
+
+    except json.JSONDecodeError as e:
+        print(f"[survives_attack_scorer] JSON parse failed: {e}")
+        return {
+            "survives": False,
+            "weak_points": ["json_parse_failed"],
+            "reasoning": "Scorer JSON parse error",
+            "score": 0.0,
+        }
     except Exception as e:
         print(f"ERROR in scorer: {e}")
         return {
@@ -133,6 +161,121 @@ Weak appeals have:
             "reasoning": "Error during evaluation",
             "score": 0.0
         }
+
+
+@weave.op()
+def cites_specific_evidence_scorer(output: str, denial_synopsis: str) -> dict:
+    """Counts specific clinical citations in the appeal."""
+    if not output or not isinstance(output, str):
+        return {"specificity_score": 0, "citations_found": []}
+
+    try:
+        resp = wandb_scorer_client.chat.completions.create(
+            model=SCORER_MODEL,
+            response_format={"type": "json_object"},
+            max_tokens=800,
+            timeout=60,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You evaluate insurance appeal letters for citation specificity. "
+                        "Count distinct citations to: (a) named clinical guideline bodies "
+                        "(ASMBS, AAAAI, ACR, NCCN, ASAM, WPATH, ECNM, APA, ACOG, ADA, etc.), "
+                        "(b) peer-reviewed studies with author names and years (e.g., 'Akin et al. 2020'), "
+                        "(c) specific policy criteria cited verbatim. "
+                        "Return JSON: {\"citations_found\": [\"list of citations\"], "
+                        "\"specificity_score\": <integer count>, \"has_specific_citations\": true|false}"
+                    ),
+                },
+                {"role": "user", "content": f"APPEAL: {output[:3000]}"},
+            ],
+        )
+        raw = resp.choices[0].message.content
+        if raw is None:
+            raise ValueError("W&B Inference returned None content")
+        result = json.loads(raw)
+        result["specificity_score"] = int(result.get("specificity_score", 0))
+        return result
+    except json.JSONDecodeError as e:
+        print(f"[cites_specific_evidence_scorer] JSON parse failed: {e}")
+        return {"specificity_score": 0, "citations_found": [], "error": "json_parse_failed"}
+    except Exception as e:
+        print(f"[cites_specific_evidence_scorer] LLM call failed: {e}")
+        return {"specificity_score": 0, "citations_found": [], "error": str(e)}
+
+
+@weave.op()
+def invokes_federal_protections_scorer(output: str, denial_synopsis: str) -> dict:
+    """Detects invocation of federal patient protections."""
+    if not output or not isinstance(output, str):
+        return {"protections_invoked": [], "protection_count": 0, "invokes_any": False}
+
+    output_lower = output.lower()
+    protections = {
+        "MHPAEA": ["mhpaea", "mental health parity", "parity act", "addiction equity"],
+        "ACA": ["affordable care act", "aca", "essential health benefits"],
+        "ACA_1557": ["section 1557", "1557", "nondiscrimination"],
+        "ERISA": ["erisa", "29 cfr 2560", "full and fair review"],
+        "NSA": ["no surprises act", "nsa", "surprise billing", "balance billing"],
+        "ADA": ["americans with disabilities act", "ada accommodation"],
+    }
+
+    found = []
+    for name, keywords in protections.items():
+        if any(kw in output_lower for kw in keywords):
+            found.append(name)
+
+    return {
+        "protections_invoked": found,
+        "protection_count": len(found),
+        "invokes_any": len(found) > 0,
+    }
+
+
+@weave.op()
+def addresses_denial_reason_scorer(output: str, denial_synopsis: str) -> dict:
+    """Evaluates whether the appeal directly addresses the denial reason."""
+    if not output or not isinstance(output, str):
+        return {"addresses_reason": False, "directness_score": 0}
+
+    try:
+        resp = wandb_scorer_client.chat.completions.create(
+            model=SCORER_MODEL,
+            response_format={"type": "json_object"},
+            max_tokens=600,
+            timeout=60,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You evaluate whether an insurance appeal directly addresses the specific "
+                        "denial reason in the original denial letter. "
+                        "Score 0-3: 0 = doesn't address denial reason, 1 = vague reference, "
+                        "2 = addresses but lacks specificity, 3 = directly counters with specific evidence. "
+                        "Return JSON: {\"directness_score\": 0|1|2|3, "
+                        "\"addresses_reason\": true|false, \"reasoning\": \"brief explanation\"}"
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"DENIAL REASON: {denial_synopsis[:1000]}\n\nAPPEAL: {output[:2500]}",
+                },
+            ],
+        )
+        raw = resp.choices[0].message.content
+        if raw is None:
+            raise ValueError("W&B Inference returned None content")
+        result = json.loads(raw)
+        result["directness_score"] = int(result.get("directness_score", 0))
+        result["addresses_reason"] = bool(result.get("addresses_reason", False))
+        return result
+    except json.JSONDecodeError as e:
+        print(f"[addresses_denial_reason_scorer] JSON parse failed: {e}")
+        return {"directness_score": 0, "addresses_reason": False, "error": "json_parse_failed"}
+    except Exception as e:
+        print(f"[addresses_denial_reason_scorer] LLM call failed: {e}")
+        return {"directness_score": 0, "addresses_reason": False, "error": str(e)}
 
 
 # ============================================================================
@@ -194,67 +337,48 @@ Treatment: {row['TreatmentCategory']} - {row.get('TreatmentSubCategory', 'N/A')}
 
 async def run_evaluations():
     """Run both baseline and harness evaluations asynchronously."""
-    
+
     print("=" * 80)
     print("DENIAL DEFENSE - COMPARATIVE EVALUATION")
     print("=" * 80)
-    print("Baseline: Single-agent GPT-4o")
-    print("Harness: Multi-agent with adversarial critic (2 rounds)")
-    print("Scorer: Adversarial 'survives attack' test (GPT-4o-mini)")
+    print("Baseline: Single-agent GPT-4o (OpenAI)")
+    print("Harness: Multi-agent with adversarial critic (OpenAI gpt-4o)")
+    print(f"Scorers: 4 metrics via W&B Inference ({SCORER_MODEL})")
     print("=" * 80)
     print()
-    
-    # Prepare dataset once
-    print(f"[{datetime.now().isoformat()}] Preparing dataset...")
-    ds = build_dataset(n_samples=15)
-    print(f"[{datetime.now().isoformat()}] ✓ Dataset ready: {len(ds.rows)} cases")
-    print()
-    
-    # Evaluate baseline
+
+    ds = build_dataset(n_samples=25)
+
+    all_scorers = [
+        survives_attack_scorer,
+        cites_specific_evidence_scorer,
+        invokes_federal_protections_scorer,
+        addresses_denial_reason_scorer,
+    ]
+
+    print(f"[{datetime.now().isoformat()}] Starting n=25 eval, scorer model: {SCORER_MODEL}")
+
+    baseline_eval = weave.Evaluation(
+        dataset=ds,
+        scorers=all_scorers,
+        name="baseline_single_agent_n25_wandb_scorer",
+    )
+    baseline_summary = await baseline_eval.evaluate(baseline_system)
+    print(f"Baseline summary: {baseline_summary}")
+
+    harness_eval = weave.Evaluation(
+        dataset=ds,
+        scorers=all_scorers,
+        name="multi_agent_harness_n25_wandb_scorer",
+    )
+    harness_summary = await harness_eval.evaluate(harness_system)
+    print(f"Harness summary: {harness_summary}")
+
+    print("\n" + "=" * 80)
+    print("BOTH EVALS COMPLETE — n=100, 4 scorers, W&B Inference")
     print("=" * 80)
-    print(f"[{datetime.now().isoformat()}] EVALUATING BASELINE (single-agent GPT-4o)")
-    print("=" * 80)
-    try:
-        baseline_eval = weave.Evaluation(
-            dataset=ds,
-            scorers=[survives_attack_scorer],
-            name="baseline_single_agent"
-        )
-        baseline_summary = await baseline_eval.evaluate(baseline_system)
-        print(f"[{datetime.now().isoformat()}] ✓ Baseline evaluation complete")
-        print(f"  Summary: {baseline_summary}")
-    except Exception as e:
-        print(f"ERROR in baseline eval: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    print()
-    
-    # Evaluate harness
-    print("=" * 80)
-    print(f"[{datetime.now().isoformat()}] EVALUATING HARNESS (multi-agent with critic)")
-    print("=" * 80)
-    print("This will take 15-20 minutes for 15 cases...")
-    print("=" * 80)
-    try:
-        harness_eval = weave.Evaluation(
-            dataset=ds,
-            scorers=[survives_attack_scorer],
-            name="multi_agent_harness"
-        )
-        harness_summary = await harness_eval.evaluate(harness_system)
-        print(f"[{datetime.now().isoformat()}] ✓ Harness evaluation complete")
-        print(f"  Summary: {harness_summary}")
-    except Exception as e:
-        print(f"ERROR in harness eval: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    print()
-    print("=" * 80)
-    print(f"[{datetime.now().isoformat()}] ✓ BOTH EVALUATIONS COMPLETE")
-    print("=" * 80)
-    print("Visit Weave dashboard → Evals tab → see side-by-side comparison")
+    print("Compare on Weave dashboard:")
+    print("  baseline_single_agent_n25_wandb_scorer vs multi_agent_harness_n25_wandb_scorer")
     print("https://wandb.ai/sabhisheksagar200-northeastern-university/denial-defense/weave")
     print("=" * 80)
 
@@ -262,6 +386,26 @@ async def run_evaluations():
 # ============================================================================
 # MAIN
 # ============================================================================
+
+def test_wandb_inference() -> bool:
+    """Verify W&B Inference is reachable BEFORE running full eval."""
+    print("Testing W&B Inference connection...")
+    try:
+        resp = wandb_scorer_client.chat.completions.create(
+            model=SCORER_MODEL,
+            max_tokens=50,
+            messages=[
+                {"role": "user", "content": "Say 'connection ok' in JSON: {\"status\": \"ok\"}"}
+            ],
+            response_format={"type": "json_object"},
+            timeout=30,
+        )
+        print(f"W&B Inference reachable: {resp.choices[0].message.content}")
+        return True
+    except Exception as e:
+        print(f"W&B Inference connection failed: {e}")
+        return False
+
 
 def main() -> int:
     """Main entry point with async execution."""
@@ -279,4 +423,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if not test_wandb_inference():
+        print("ABORT: W&B Inference not reachable. Reverting to OpenAI scorers required.")
+        exit(1)
     exit(main())
